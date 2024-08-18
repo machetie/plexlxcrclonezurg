@@ -32,6 +32,16 @@ check_and_install_tools() {
         install_package gh
     fi
 
+    # Check if gh is authenticated
+    if ! gh auth status &> /dev/null; then
+        echo "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
+        gh auth login
+        if ! gh auth status &> /dev/null; then
+            echo "Failed to authenticate GitHub CLI. Please try again manually by running 'gh auth login'."
+            exit 1
+        fi
+    fi
+
     if ! command -v jq &> /dev/null; then
         echo "jq is not installed. Installing..."
         install_package jq
@@ -173,7 +183,10 @@ install_zurg() {
 install_public_repo() {
     # List available releases
     echo "Available Public Repo releases:"
-    gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}
+    if ! gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}; then
+        echo "Failed to list releases. Please check your internet connection and GitHub authentication."
+        exit 1
+    fi
 
     # Prompt user to select a release
     read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
