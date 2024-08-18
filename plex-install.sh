@@ -80,7 +80,7 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
         msg_info "Installing Docker"
         
         # Download and execute the Docker installation script
-        curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/docker-install.sh -o docker_install.sh
+        curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/Docker-install.sh -o docker_install.sh
         chmod +x docker_install.sh
         ./docker_install.sh
         rm docker_install.sh
