@@ -34,39 +34,22 @@ function error_handler() {
   echo -e "\n$error_message\n"
 }
 
-# This function displays a spinner.
-function spinner() {
-    local chars="/-\|"
-    local spin_i=0
-    printf "\e[?25l"
-    while true; do
-        printf "\r \e[36m%s\e[0m" "${chars:spin_i++%${#chars}:1}"
-        sleep 0.1
-    done
-}
-
 # This function displays an informational message with a yellow color.
 function msg_info() {
   local msg="$1"
-  echo -ne " ${HOLD} ${YW}${msg}   "
-  spinner &
-  SPINNER_PID=$!
+  echo -ne " ${HOLD} ${YW}${msg}...${CL}"
 }
 
 # This function displays a success message with a green color.
 function msg_ok() {
-  if [ -n "$SPINNER_PID" ] && ps -p $SPINNER_PID > /dev/null; then kill $SPINNER_PID > /dev/null; fi
-  printf "\e[?25h"
   local msg="$1"
-  echo -e "${BFR} ${CM} ${GN}${msg}${CL}"
+  echo -e "\r ${CM} ${GN}${msg}${CL}"
 }
 
 # This function displays a error message with a red color.
 function msg_error() {
-  if [ -n "$SPINNER_PID" ] && ps -p $SPINNER_PID > /dev/null; then kill $SPINNER_PID > /dev/null; fi
-  printf "\e[?25h"
   local msg="$1"
-  echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
+  echo -e "\r ${CROSS} ${RD}${msg}${CL}"
 }
 
 # This checks for the presence of valid Container Storage and Template Storage locations
