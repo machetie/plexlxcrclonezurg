@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source ./build.func
+source <(curl -s https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/build.func)
 # Copyright (c) 2021-2024 tteck
 # Author: tteck (tteckster)
 # License: MIT
@@ -54,10 +54,9 @@ function default_settings() {
 
 function update_script() {
 if [[ ! -f /etc/apt/sources.list.d/plexmediaserver.list ]]; then msg_error "No ${APP} Installation Found!"; exit; fi
-UPD=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SUPPORT" --radiolist --cancel-button Exit-Script "Spacebar = Select \nplexupdate info >> https://github.com/mrworf/plexupdate" 11 59 3 \
+UPD=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SUPPORT" --radiolist --cancel-button Exit-Script "Spacebar = Select \nplexupdate info >> https://github.com/mrworf/plexupdate" 10 59 2 \
   "1" "Update LXC" ON \
   "2" "Install plexupdate" OFF \
-  "3" "Install Zurg and Rclone" OFF \
   3>&1 1>&2 2>&3)
 
 header_info
@@ -71,17 +70,6 @@ fi
 if [ "$UPD" == "2" ]; then
 set +e
 bash -c "$(wget -qO - https://raw.githubusercontent.com/mrworf/plexupdate/master/extras/installer.sh)"
-exit
-fi
-if [ "$UPD" == "3" ]; then
-msg_info "Installing Zurg and Rclone"
-# Add commands to install Zurg and Rclone here
-# For example:
-# apt-get update
-# apt-get install -y rclone
-# wget https://github.com/zurg-project/zurg/releases/latest/download/zurg-linux-amd64 -O /usr/local/bin/zurg
-# chmod +x /usr/local/bin/zurg
-msg_ok "Installed Zurg and Rclone"
 exit
 fi
 }

@@ -565,8 +565,8 @@ build_container() {
     $PW
   "
   
-  # Execute the local create_lxc.sh script
-  bash create_lxc.sh || exit
+  # This executes create_lxc.sh and creates the container and .conf file
+  bash -c "$(wget -qLO - https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/create_lxc.sh)" || exit
 
   LXC_CONFIG=/etc/pve/lxc/${CTID}.conf
   if [ "$CT_TYPE" == "0" ]; then
@@ -631,11 +631,7 @@ EOF'
     pct exec "$CTID" -- ash -c "apk add bash >/dev/null"
   fi
   
-  # Copy the local installation script to the container and execute it
-  pct push "$CTID" "${var_install}.sh" "/root/${var_install}.sh"
-  pct exec "$CTID" -- bash "/root/${var_install}.sh"
-
-  # ... (rest of the function remains unchanged)
+lxc-attach -n "$CTID" -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/$var_install.sh)" || exit
 }
 
 # This function sets the description of the container.

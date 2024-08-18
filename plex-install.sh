@@ -59,7 +59,7 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     msg_info "Installing Zurg"
     
     # Download and execute the Zurg installation script
-    curl -sSL https://raw.githubusercontent.com/your-repo/zurg.sh -o zurg_install.sh
+    curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/zurg.sh -o zurg_install.sh
     chmod +x zurg_install.sh
     ./zurg_install.sh
     rm zurg_install.sh
@@ -67,7 +67,7 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     msg_info "Installing Rclone"
     
     # Download and execute the Rclone installation script
-    curl -sSL https://raw.githubusercontent.com/your-repo/rclone.sh -o rclone_install.sh
+    curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/rclone.sh -o rclone_install.sh
     chmod +x rclone_install.sh
     ./rclone_install.sh
     rm rclone_install.sh
@@ -80,7 +80,7 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
         msg_info "Installing Docker"
         
         # Download and execute the Docker installation script
-        curl -sSL https://raw.githubusercontent.com/your-repo/docker-install.sh -o docker_install.sh
+        curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/docker-install.sh -o docker_install.sh
         chmod +x docker_install.sh
         ./docker_install.sh
         rm docker_install.sh
