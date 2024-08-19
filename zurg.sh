@@ -1,4 +1,48 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+source /dev/stdin <<< "$FUNCTIONS_FILE_PATH"
+color
+verb_ip6
+catch_errors
+setting_up_container
+network_check
+update_os
+
+msg_info "Installing Dependencies"
+$STD apt-get install -y curl sudo mc wget unzip git gh jq
+msg_ok "Installed Dependencies"
+
+msg_info "Determining System Info"
+SYSTEM_INFO=$(get_system_info)
+msg_ok "System Info: $SYSTEM_INFO"
+
+msg_info "Zurg Installation"
+msg_question "Do you want to install from the private repository? (Y/N)"
+read -r repo_choice
+
+if [[ "$repo_choice" =~ ^[Yy]$ ]]; then
+    msg_info "Installing from private repository"
+    read -p "Enter your GitHub token: " GITHUB_TOKEN
+    install_zurg
+else
+    msg_info "Installing from public repository"
+    install_public_repo
+fi
+
+msg_info "Creating Zurg Config"
+create_zurg_config_file
+msg_ok "Created Zurg Config"
+
+msg_info "Setting Up Systemd Service"
+create_and_start_systemd_service
+msg_ok "Set Up Systemd Service"
+
+msg_info "Cleaning up"
+$STD apt-get -y autoremove
+$STD apt-get -y autoclean
+msg_ok "Cleaned"
+
+msg_ok "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
 
 # Repository details
 PRIVATE_OWNER="debridmediamanager"
@@ -115,6 +159,15 @@ EOL
 
 # Function to install Zurg (private repo)
 install_zurg() {
+    # Authenticate with GitHub
+    msg_info "Authenticating with GitHub..."
+    gh auth login --with-token <<< "$GITHUB_TOKEN"
+    if [ $? -ne 0 ]; then
+        msg_error "GitHub authentication failed. Please check your token and try again."
+        exit 1
+    fi
+    msg_ok "GitHub authentication successful."
+
     # List available releases without pager
     msg_info "Available Zurg releases:"
     gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO} --limit 10
@@ -235,47 +288,3 @@ EOF
 
     msg_ok "Zurg systemd service has been created and started."
 }
-
-# Main script execution
-if [ $EUID -ne 0 ]; then
-    msg_error "This script must be run as root. Please use sudo or run as root."
-    exit 1
-fi
-
-check_and_install_tools
-
-SYSTEM_INFO=$(get_system_info)
-msg_info "Detected system: $SYSTEM_INFO"
-
-# Prompt user to choose which repo to install
-msg_info "Which repository would you like to install?"
-msg_info "1. Zurg (Private repository)"
-msg_info "2. Public Repository"
-read -p "Enter your choice (1 or 2): " REPO_CHOICE
-
-case $REPO_CHOICE in
-    1)
-        # Ensure the user is authenticated with gh
-        if ! gh auth status &> /dev/null; then
-            msg_info "Please authenticate with GitHub CLI"
-            gh auth login
-        fi
-        install_zurg
-        ;;
-    2)
-        install_public_repo
-        ;;
-    *)
-        msg_error "Invalid choice. Exiting."
-        exit 1
-        ;;
-esac
-
-# Create config directory and file
-mkdir -p /etc/zurg
-create_zurg_config_file
-
-# Create and start systemd service
-create_and_start_systemd_service
-
-msg_ok "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
