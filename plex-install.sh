@@ -57,21 +57,13 @@ msg_ok "Cleaned"
 read -p "Would you like to add Zurg and Rclone? (Y/n): " install_zurg_rclone
 install_zurg_rclone=${install_zurg_rclone:-Y}
 if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
-    msg_info "Installing Zurg"
+    msg_info "Installing Zurg and Rclone"
     
-    # Download and execute the Zurg installation script
-    curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/zurg.sh -o zurg_install.sh
-    chmod +x zurg_install.sh
-    ./zurg_install.sh
-    rm zurg_install.sh
-    
-    msg_info "Installing Rclone"
-    
-    # Download and execute the Rclone installation script
-    curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/rclone.sh -o rclone_install.sh
-    chmod +x rclone_install.sh
-    ./rclone_install.sh
-    rm rclone_install.sh
+    # Download and execute the Zurg and Rclone installation script
+    curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/zurg_rclone-install.sh -o zurg_rclone-install.sh
+    chmod +x zurg_rclone-install.sh
+    ./zurg_rclone-install.sh
+    rm zurg_rclone-install.sh
     
     msg_ok "Installed Zurg and Rclone"
 

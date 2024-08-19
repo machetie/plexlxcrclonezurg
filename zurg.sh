@@ -8,6 +8,24 @@ setting_up_container
 network_check
 update_os
 
+# Function to determine OS and architecture
+get_system_info() {
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    case $ARCH in
+        x86_64)
+            ARCH="amd64"
+            ;;
+        aarch64)
+            ARCH="arm64"
+            ;;
+        armv7l)
+            ARCH="arm"
+            ;;
+    esac
+    echo "${OS}-${ARCH}"
+}
+
 msg_info "Installing Dependencies"
 $STD apt-get install -y curl sudo mc wget unzip git gh jq
 msg_ok "Installed Dependencies"
