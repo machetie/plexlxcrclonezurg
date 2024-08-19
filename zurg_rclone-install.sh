@@ -40,7 +40,7 @@ msg_ok "System Info: $SYSTEM_INFO"
 install_zurg() {
     msg_info "Zurg Installation"
     msg_question "Do you want to install from the private repository? (Y/N)"
-    read -r repo_choice
+read -r repo_choice
 
     if [[ "$repo_choice" =~ ^[Yy]$ ]]; then
         msg_info "Installing from private repository"
@@ -282,3 +282,9 @@ msg_ok "Cleaned"
 
 msg_ok "Zurg and Rclone setup completed successfully"
 echo -e "Zurg is now configured and Rclone is mounted at ${MOUNT_POINT}"
+
+# Add this function after msg_ok and before install_zurg
+msg_question() {
+  local msg="$1"
+  echo -e "\n${YW}?${CL} ${msg}"
+}
