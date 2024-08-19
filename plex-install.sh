@@ -68,7 +68,7 @@ if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
 
   # List available releases
   msg_info "Fetching available Zurg releases:"
-  gh release list -R debridmediamanager/zurg --limit 10
+  gh release list -R debridmediamanager/zurg --limit 10 | cat
   msg_ok "Available Zurg releases:"
   # Prompt user to select a release
   read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
@@ -82,8 +82,6 @@ if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
     gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
   fi
 
-  # Find the downloaded file
-  BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
 else
   msg_info "Installing Zurg from public repository"
   DOWNLOAD_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
@@ -107,13 +105,17 @@ else
     msg_error "Failed to download Zurg. Installation unsuccessful."
   fi
 fi
-if [ -n "$BINARY_FILE" ]; then
+# Find the downloaded file
+  BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
+  if [ -z "$BINARY_FILE" ]; then
+      msg_error "Unable to find the Zurg binary file."
+      exit 1
+  fi
+  # Make the binary executable
   chmod +x "$BINARY_FILE"
+  # Move the binary to a directory in PATH
   mv "$BINARY_FILE" /usr/local/bin/zurg
-  msg_ok "Zurg installed successfully"
-else
-  msg_error "Failed to find Zurg binary. Installation unsuccessful."
-fi
+  msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 
 # Prompt user for adding default config and systemd service
 read -p "Would you like to add default config for zurg and add to systemd service? (y/n): " ADD_CONFIG_AND_SERVICE
