@@ -115,9 +115,9 @@ EOL
 
 # Function to install Zurg (private repo)
 install_zurg() {
-    # List available releases
+    # List available releases without pager
     echo "Available Zurg releases:"
-    gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO}
+    gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO} --limit 10
 
     # Prompt user to select a release
     read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
