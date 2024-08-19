@@ -97,12 +97,14 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     # Zurg Installation
     install_zurg() {
         msg_info "Zurg Installation"
+        msg_ok "Starting Zurg Installation"
         echo
-        prompt_user "Do you want to install from the private repository? <y/N> " use_private_repo
+        read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_ok "User chose to install from private repository"
             msg_info "Installing from private repository"
             github_ops
+            msg_ok "Completed installation from private repository"
         else
             msg_ok "User chose to install from public repository"
             msg_info "Installing from public repository"
@@ -111,6 +113,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
 
             msg_info "Downloading Zurg from public repository..."
             wget $DOWNLOAD_URL -O $FILENAME
+            msg_ok "Downloaded Zurg from public repository"
 
             if [ ! -f "$FILENAME" ]; then
                 msg_error "Failed to download the file. Please check your internet connection and try again."
@@ -122,6 +125,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
             # Extract the zip file
             unzip -o "$FILENAME"
             rm "$FILENAME"
+            msg_ok "Extracted and cleaned up Zurg files"
         fi
 
         # Find the downloaded file
@@ -147,7 +151,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     configure_zurg() {
         msg_info "Creating Zurg Config"
         mkdir -p /etc/zurg
-        prompt_user "Enter your Real-Debrid API token: " RD_TOKEN
+        read -r -p "Enter your Real-Debrid API token: " RD_TOKEN
 
         cat > /etc/zurg/config.yml << EOL
 # Zurg configuration version
@@ -270,7 +274,7 @@ EOF
     # Create mount point and service
     create_mount_service() {
         msg_info "Creating mount point and service"
-        prompt_user "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
+        read -r -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
         mkdir -p "$MOUNT_POINT"
 
         cat << EOF > /etc/systemd/system/rclone-zurg.service
@@ -306,7 +310,7 @@ EOF
     msg_ok "Installed Zurg and Rclone"
 
     # Docker Installation
-    prompt_user "Would you like to install Docker? <y/N> " install_docker
+    read -r -p "Would you like to install Docker? <y/N> " install_docker
     if [[ ${install_docker,,} =~ ^(y|yes)$ ]]; then
         msg_ok "User chose to install Docker"
         msg_info "Installing Docker"
