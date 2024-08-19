@@ -90,9 +90,8 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
         read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_ok "User chose to install from private repository"
-            msg_info "Installing from private repository"
             if github_ops; then
-                msg_ok "Completed installation from private repository"
+                echo "Completed installation from private repository"
             else
                 msg_error "Failed to install from private repository"
                 return 1
