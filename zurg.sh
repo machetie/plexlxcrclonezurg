@@ -105,25 +105,6 @@ check_and_install_tools() {
     fi
 }
 
-# Function to determine OS and architecture
-get_system_info() {
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
-    case $ARCH in
-        x86_64)
-            ARCH="amd64"
-            ;;
-        aarch64)
-            ARCH="arm64"
-            ;;
-        armv7l)
-            ARCH="arm"
-            ;;
-    esac
-    echo "${OS}-${ARCH}"
-}
-export -f get_system_info
-
 # Global variable for Real-Debrid API token
 RD_TOKEN=""
 
