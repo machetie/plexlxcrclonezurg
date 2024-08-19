@@ -193,46 +193,19 @@ install_zurg() {
 
 # Function to install public repo
 install_public_repo() {
-    # List available releases
-    msg_info "Available Public Repo releases:"
-    if ! gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}; then
-        msg_error "Failed to list releases. Please check your internet connection."
+    # Direct installation for public version
+    PUBLIC_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
+    msg_info "Downloading public release from ${PUBLIC_URL}"
+    if ! wget -q -O "zurg-public.zip" "$PUBLIC_URL"; then
+        msg_error "Failed to download the public release. Please check your internet connection."
         exit 1
     fi
 
-    # Prompt user to select a release
-    read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
-
-    # Download the release
-    if [ -z "$RELEASE_TAG" ]; then
-        msg_info "Downloading latest release..."
-        if ! gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} -p "zurg-*${SYSTEM_INFO}.zip" --clobber; then
-            msg_error "Failed to download the release. Please check your internet connection."
-            exit 1
-        fi
-    else
-        msg_info "Downloading release ${RELEASE_TAG}..."
-        if ! gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} ${RELEASE_TAG} -p "zurg-*${SYSTEM_INFO}.zip" --clobber; then
-            msg_error "Failed to download the release. Please check your internet connection or the release tag."
-            exit 1
-        fi
-    fi
-
-    # Find the downloaded file
-    DOWNLOADED_FILE=$(ls -t zurg-*.zip 2>/dev/null | head -n1)
-
-    if [ -z "$DOWNLOADED_FILE" ]; then
-        msg_error "No matching asset found for your system ($SYSTEM_INFO)"
-        msg_info "Available assets:"
-        gh release view -R ${PUBLIC_OWNER}/${PUBLIC_REPO} --json assets --jq '.assets[].name'
-        exit 1
-    fi
-
-    msg_ok "Asset downloaded successfully: $DOWNLOADED_FILE"
+    msg_ok "Asset downloaded successfully: zurg-public.zip"
 
     # Extract the zip file
-    unzip -o "$DOWNLOADED_FILE"
-    rm "$DOWNLOADED_FILE"
+    unzip -o "zurg-public.zip"
+    rm "zurg-public.zip"
 
     # Find the extracted binary
     BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
@@ -301,6 +274,12 @@ read -p "Enter your choice (1 or 2): " REPO_CHOICE
 
 case $REPO_CHOICE in
     1)
+        # Check if gh is authenticated before installing from private repo
+        if ! gh auth status &> /dev/null; then
+            msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
+            msg_info "After authentication, please run this script again."
+            exit 0
+        fi
         install_zurg
         ;;
     2)
