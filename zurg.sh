@@ -274,11 +274,16 @@ read -p "Enter your choice (1 or 2): " REPO_CHOICE
 
 case $REPO_CHOICE in
     1)
-        # Check if gh is authenticated before installing from private repo
+        # Attempt to authenticate GitHub CLI if not already authenticated
         if ! gh auth status &> /dev/null; then
-            msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
-            msg_info "After authentication, please run this script again."
-            exit 0
+            msg_info "GitHub CLI is not authenticated. Please enter your GitHub Personal Access Token."
+            read -sp "GitHub Token: " GITHUB_TOKEN
+            echo ""
+            if ! echo "$GITHUB_TOKEN" | gh auth login --with-token; then
+                msg_error "Failed to authenticate GitHub CLI. Please check your token and try again."
+                exit 1
+            fi
+            msg_ok "GitHub CLI authenticated successfully."
         fi
         install_zurg
         ;;
