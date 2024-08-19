@@ -117,13 +117,14 @@ vendor = other
 pacer_min_sleep = 0
 EOF
         msg_ok "Default rclone config created at '$CONFIGFILE'."
+    else
+        msg_info "Rclone config file already exists at '$CONFIGFILE'."
     fi
 
     # Create a symbolic link to the default config location
     mkdir -p /root/.config/rclone
     ln -sf "$CONFIGFILE" /root/.config/rclone/rclone.conf
 
-    rclone config --config "$CONFIGFILE" || abort "Failed to configure rclone."
     msg_ok "Configuration complete."
 }
 
