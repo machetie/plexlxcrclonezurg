@@ -25,13 +25,6 @@ $STD apt-get install -y jq
 $STD apt-get install -y fuse3
 msg_ok "Installed Dependencies"
 
-# Use arch_check function to determine system architecture
-arch_check
-SYSTEM_INFO="${OS}-${ARCH}"
-
-msg_info "System Info: $SYSTEM_INFO"
-msg_ok "Determined System Info"
-
 msg_info "Setting Up Hardware Acceleration"
 $STD apt-get -y install {va-driver-all,ocl-icd-libopencl1,intel-opencl-icd,vainfo,intel-gpu-tools}
 if [[ "$CTTYPE" == "0" ]]; then
@@ -86,7 +79,7 @@ if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
     gh release download -R debridmediamanager/zurg -p "*${SYSTEM_INFO}*" --clobber
   else
     msg_info "Downloading release ${RELEASE_TAG}..."
-    gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*${SYSTEM_INFO}*" --clobber
+    gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
   fi
 
   # Find the downloaded file
