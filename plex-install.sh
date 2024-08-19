@@ -56,16 +56,21 @@ read -p "Would you like to add Zurg and Rclone? (Y/n): " install_zurg_rclone
 install_zurg_rclone=${install_zurg_rclone:-Y}
 if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     msg_info "Installing Zurg and Rclone"
+    echo
     
     # Zurg Installation
     install_zurg() {
         msg_info "Zurg Installation"
+        echo
         read -p "Do you want to install from the private repository? (y/N): " use_private_repo
         use_private_repo=${use_private_repo:-N}
+        echo
 
         if [[ $use_private_repo =~ ^[Yy]$ ]]; then
             msg_info "Installing from private repository"
+            echo
             read -p "Enter your GitHub token: " GITHUB_TOKEN
+            echo
             
             # Authenticate with GitHub
             msg_info "Authenticating with GitHub..."
@@ -75,21 +80,24 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
                 exit 1
             fi
             msg_ok "GitHub authentication successful."
+            echo
 
             # List available releases without pager
             msg_info "Available Zurg releases:"
-            gh release list -R debridmediamanager/zurg --limit 10
+            gh release list -R debridmediamanager/zurg --limit 10 | cat
+            echo
 
             # Prompt user to select a release
             read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
+            echo
 
             # Download the release
             if [ -z "$RELEASE_TAG" ]; then
                 msg_info "Downloading latest release..."
-                gh release download -R debridmediamanager/zurg -p "*${SYSTEM_INFO}*" --clobber
+                gh release download -R debridmediamanager/zurg -p "*linux-amd64*" --clobber
             else
                 msg_info "Downloading release ${RELEASE_TAG}..."
-                gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*${SYSTEM_INFO}*" --clobber
+                gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
             fi
         else
             msg_info "Installing from public repository"
