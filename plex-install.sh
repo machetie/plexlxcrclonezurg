@@ -86,23 +86,29 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
 
     # Zurg Installation
     install_zurg() {
-        msg_info "Zurg Installation"
-        echo
+              
         read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_ok "User chose to install from private repository"
             msg_info "Installing from private repository"
-            github_ops
-            msg_ok "Completed installation from private repository"
+            if github_ops; then
+                msg_ok "Completed installation from private repository"
+            else
+                msg_error "Failed to install from private repository"
+                return 1
+            fi
         else
             msg_ok "User chose to install from public repository"
             msg_info "Installing from public repository"
             DOWNLOAD_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
             FILENAME="zurg-v0.9.3-final-linux-amd64.zip"
 
-            msg_info "Downloading Zurg from public repository..."
-            wget $DOWNLOAD_URL -O $FILENAME
-            msg_ok "Downloaded Zurg from public repository"
+            if wget $DOWNLOAD_URL -O $FILENAME; then
+                msg_ok "Downloaded Zurg from public repository"
+            else
+                msg_error "Failed to download Zurg from public repository"
+                return 1
+            fi
 
             if [ ! -f "$FILENAME" ]; then
                 msg_error "Failed to download the file. Please check your internet connection and try again."
@@ -112,9 +118,13 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
             msg_ok "File downloaded successfully: $FILENAME"
 
             # Extract the zip file
-            unzip -o "$FILENAME"
-            rm "$FILENAME"
-            msg_ok "Extracted and cleaned up Zurg files"
+            if unzip -o "$FILENAME"; then
+                rm "$FILENAME"
+                msg_ok "Extracted and cleaned up Zurg files"
+            else
+                msg_error "Failed to extract Zurg files"
+                return 1
+            fi
         fi
 
         # Find the downloaded file
@@ -126,23 +136,28 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
         fi
 
         # Make the binary executable
-        chmod +x "$BINARY_FILE"
-
-        # Move the binary to a directory in PATH
-        mv "$BINARY_FILE" /usr/local/bin/zurg
-
-        msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
+        if chmod +x "$BINARY_FILE"; then
+            # Move the binary to a directory in PATH
+            if mv "$BINARY_FILE" /usr/local/bin/zurg; then
+                msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
+            else
+                msg_error "Failed to move Zurg binary to /usr/local/bin/"
+                return 1
+            fi
+        else
+            msg_error "Failed to make Zurg binary executable"
+            return 1
+        fi
     }
 
-    install_zurg
+    if install_zurg; then
+        # Zurg Configuration
+        configure_zurg() {
+            msg_info "Creating Zurg Config"
+            mkdir -p /etc/zurg
+            read -r -p "Enter your Real-Debrid API token: " RD_TOKEN
 
-    # Zurg Configuration
-    configure_zurg() {
-        msg_info "Creating Zurg Config"
-        mkdir -p /etc/zurg
-        read -r -p "Enter your Real-Debrid API token: " RD_TOKEN
-
-        cat > /etc/zurg/config.yml << EOL
+            cat > /etc/zurg/config.yml << EOL
 # Zurg configuration version
 zurg: v1
 token: ${RD_TOKEN} # https://real-debrid.com/apitoken
@@ -178,15 +193,14 @@ directories:
       - regex: /.*/
 EOL
 
-        msg_ok "Created Zurg Config"
-    }
+            msg_ok "Created Zurg Config"
+        }
 
-    configure_zurg
-
-    # Setup Zurg Systemd Service
-    setup_zurg_service() {
-        msg_info "Setting Up Zurg Systemd Service"
-        cat << EOF | tee /etc/systemd/system/zurg.service
+        if configure_zurg; then
+            # Setup Zurg Systemd Service
+            setup_zurg_service() {
+                msg_info "Setting Up Zurg Systemd Service"
+                cat << EOF | tee /etc/systemd/system/zurg.service
 [Unit]
 Description=zurg
 After=network.target
@@ -206,32 +220,31 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 EOF
 
-        systemctl daemon-reload
-        systemctl enable zurg.service
-        systemctl start zurg.service
+                systemctl daemon-reload
+                systemctl enable zurg.service
+                systemctl start zurg.service
 
-        msg_ok "Zurg systemd service has been created and started."
-    }
+                msg_ok "Zurg systemd service has been created and started."
+            }
 
-    setup_zurg_service
+            if setup_zurg_service; then
+                # Rclone Installation and Configuration
+                install_configure_rclone() {
+                    msg_info "Installing rclone"
+                    RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
 
-    # Rclone Installation and Configuration
-    install_configure_rclone() {
-        msg_info "Installing rclone"
-        RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
+                    $STD curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+                    $STD unzip rclone-current-linux-amd64.zip
+                    $STD cd rclone-*-linux-amd64
+                    $STD cp rclone /usr/local/bin/
+                    $STD chown root:root /usr/local/bin/rclone
+                    $STD chmod 755 /usr/local/bin/rclone
 
-        $STD curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
-        $STD unzip rclone-current-linux-amd64.zip
-        $STD cd rclone-*-linux-amd64
-        $STD cp rclone /usr/local/bin/
-        $STD chown root:root /usr/local/bin/rclone
-        $STD chmod 755 /usr/local/bin/rclone
+                    msg_ok "Installed rclone $RCLONE_LATEST_VERSION"
 
-        msg_ok "Installed rclone $RCLONE_LATEST_VERSION"
-
-        msg_info "Configuring rclone"
-        mkdir -p /etc/rclone
-        cat << EOF > /etc/rclone/rclone.conf
+                    msg_info "Configuring rclone"
+                    mkdir -p /etc/rclone
+                    cat << EOF > /etc/rclone/rclone.conf
 [zurg]
 type = webdav
 url = http://zurg:9999/dav
@@ -239,34 +252,32 @@ vendor = other
 pacer_min_sleep = 0
 EOF
 
-        mkdir -p /root/.config/rclone
-        ln -sf /etc/rclone/rclone.conf /root/.config/rclone/rclone.conf
+                    mkdir -p /root/.config/rclone
+                    ln -sf /etc/rclone/rclone.conf /root/.config/rclone/rclone.conf
 
-        msg_ok "Configured rclone"
-    }
+                    msg_ok "Configured rclone"
+                }
 
-    install_configure_rclone
+                if install_configure_rclone; then
+                    # Setup fuse3
+                    setup_fuse3() {
+                        msg_info "Setting up fuse3"
+                        if [ -f /etc/fuse.conf ]; then
+                            sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+                        else
+                            echo "user_allow_other" > /etc/fuse.conf
+                        fi
+                        msg_ok "Set up fuse3"
+                    }
 
-    # Setup fuse3
-    setup_fuse3() {
-        msg_info "Setting up fuse3"
-        if [ -f /etc/fuse.conf ]; then
-            sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
-        else
-            echo "user_allow_other" > /etc/fuse.conf
-        fi
-        msg_ok "Set up fuse3"
-    }
+                    if setup_fuse3; then
+                        # Create mount point and service
+                        create_mount_service() {
+                            msg_info "Creating mount point and service"
+                            read -r -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
+                            mkdir -p "$MOUNT_POINT"
 
-    setup_fuse3
-
-    # Create mount point and service
-    create_mount_service() {
-        msg_info "Creating mount point and service"
-        read -r -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
-        mkdir -p "$MOUNT_POINT"
-
-        cat << EOF > /etc/systemd/system/rclone-zurg.service
+                            cat << EOF > /etc/systemd/system/rclone-zurg.service
 [Unit]
 Description=RClone Mount for Zurg
 After=network-online.target
@@ -287,16 +298,33 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-        systemctl daemon-reload
-        systemctl enable rclone-zurg.service
-        systemctl start rclone-zurg.service
+                            systemctl daemon-reload
+                            systemctl enable rclone-zurg.service
+                            systemctl start rclone-zurg.service
 
-        msg_ok "Created mount point and service"
-    }
+                            msg_ok "Created mount point and service"
+                        }
 
-    create_mount_service
-    
-    msg_ok "Installed Zurg and Rclone"
+                        if create_mount_service; then
+                            msg_ok "Installed Zurg and Rclone"
+                        else
+                            msg_error "Failed to create mount point and service"
+                        fi
+                    else
+                        msg_error "Failed to set up fuse3"
+                    fi
+                else
+                    msg_error "Failed to install and configure rclone"
+                fi
+            else
+                msg_error "Failed to set up Zurg systemd service"
+            fi
+        else
+            msg_error "Failed to configure Zurg"
+        fi
+    else
+        msg_error "Failed to install Zurg"
+    fi
 
     # Docker Installation
     read -r -p "Would you like to install Docker? <y/N> " install_docker
