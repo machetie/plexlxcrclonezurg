@@ -87,11 +87,10 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     # Zurg Installation
     install_zurg() {
               
-        read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
+        read -r -p "Do you want to install from the private Zurg repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
-            msg_ok "User chose to install from private repository"
             if github_ops; then
-                echo "Completed installation from private repository"
+                msg_info "Completed installation from private repository"
             else
                 msg_error "Failed to install from private repository"
                 return 1

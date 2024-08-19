@@ -525,18 +525,22 @@ start() {
 
 # This function collects user settings and integrates all the collected information.
 build_container() {
+#  if [ "$VERB" == "yes" ]; then set -x; fi
+
   if [ "$CT_TYPE" == "1" ]; then
-    FEATURES="keyctl=1,nesting=1,fuse=1"
+    FEATURES="keyctl=1,nesting=1"
   else
     FEATURES="nesting=1"
   fi
 
+
+  TEMP_DIR=$(mktemp -d)
+  pushd $TEMP_DIR >/dev/null
   if [ "$var_os" == "alpine" ]; then
     export FUNCTIONS_FILE_PATH="$(curl -s https://raw.githubusercontent.com/tteck/Proxmox/main/misc/alpine-install.func)"
   else
     export FUNCTIONS_FILE_PATH="$(curl -s https://raw.githubusercontent.com/tteck/Proxmox/main/misc/install.func)"
   fi
-
   export CACHER="$APT_CACHER"
   export CACHER_IP="$APT_CACHER_IP"
   export tz="$timezone"
@@ -564,9 +568,8 @@ build_container() {
     -unprivileged $CT_TYPE
     $PW
   "
-  
   # This executes create_lxc.sh and creates the container and .conf file
-  bash -c "$(wget -qLO - https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/create_lxc.sh)" || exit
+  bash -c "$(wget -qLO - https://raw.githubusercontent.com/tteck/Proxmox/main/ct/create_lxc.sh)" || exit
 
   LXC_CONFIG=/etc/pve/lxc/${CTID}.conf
   if [ "$CT_TYPE" == "0" ]; then
@@ -630,8 +633,8 @@ http://dl-cdn.alpinelinux.org/alpine/latest-stable/community
 EOF'
     pct exec "$CTID" -- ash -c "apk add bash >/dev/null"
   fi
-  
-lxc-attach -n "$CTID" -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/$var_install.sh)" || exit
+  lxc-attach -n "$CTID" -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/tteck/Proxmox/main/install/$var_install.sh)" || exit
+
 }
 
 # This function sets the description of the container.
