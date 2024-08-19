@@ -1,5 +1,23 @@
 #!/bin/bash
 
+source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+color
+verb_ip6
+catch_errors
+setting_up_container
+network_check
+update_os
+
+msg_info() {
+    echo -e "\e[1;32m[INFO]\e[0m $1"
+}
+msg_ok() {
+    echo -e "\e[1;32m[OK]\e[0m $1"
+}
+msg_error() {
+    echo -e "\e[1;31m[ERROR]\e[0m $1"
+}
+
 # Repository details
 PRIVATE_OWNER="debridmediamanager"
 PRIVATE_REPO="zurg"
@@ -8,49 +26,49 @@ PUBLIC_REPO="zurg-testing"
 
 # Function to install packages
 install_package() {
+    msg_info "Installing $1..."
     if [ -x "$(command -v apt-get)" ]; then
-        sudo apt-get update && sudo apt-get install -y $1
+        $STD apt-get update && $STD apt-get install -y $1
     elif [ -x "$(command -v yum)" ]; then
-        sudo yum install -y $1
+        $STD yum install -y $1
     elif [ -x "$(command -v brew)" ]; then
-        brew install $1
+        $STD brew install $1
     else
-        echo "Unable to install $1. Please install it manually."
+        msg_error "Unable to install $1. Please install it manually."
         exit 1
     fi
+    msg_ok "Installed $1"
 }
 
 # Function to check and install required tools
 check_and_install_tools() {
+    msg_info "Checking and installing required tools"
     if ! command -v git &> /dev/null; then
-        echo "Git is not installed. Installing..."
         install_package git
     fi
 
     if ! command -v gh &> /dev/null; then
-        echo "GitHub CLI (gh) is not installed. Installing..."
         install_package gh
     fi
 
     # Check if gh is authenticated
     if ! gh auth status &> /dev/null; then
-        echo "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
+        msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
         gh auth login
         if ! gh auth status &> /dev/null; then
-            echo "Failed to authenticate GitHub CLI. Please try again manually by running 'gh auth login'."
+            msg_error "Failed to authenticate GitHub CLI. Please try again manually by running 'gh auth login'."
             exit 1
         fi
     fi
 
     if ! command -v jq &> /dev/null; then
-        echo "jq is not installed. Installing..."
         install_package jq
     fi
 
     if ! command -v unzip &> /dev/null; then
-        echo "unzip is not installed. Installing..."
         install_package unzip
     fi
+    msg_ok "All required tools are installed"
 }
 
 # Function to determine OS and architecture
@@ -111,19 +129,19 @@ directories:
     filters:
       - regex: /.*/
 EOL
-    echo "Config file created at /etc/zurg/config.yml with your API token."
+    msg_ok "Config file created at /etc/zurg/config.yml with your API token."
 }
 
 # Function to install Zurg (private repo)
 install_zurg() {
     # Ensure the user is authenticated with gh
     if ! gh auth status &> /dev/null; then
-        echo "Please authenticate with GitHub CLI"
+        msg_info "Please authenticate with GitHub CLI"
         gh auth login
     fi
 
     # List available releases
-    echo "Available Zurg releases:"
+    msg_info "Available Zurg releases:"
     gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO}
 
     # Prompt user to select a release
@@ -131,10 +149,10 @@ install_zurg() {
 
     # Download the release
     if [ -z "$RELEASE_TAG" ]; then
-        echo "Downloading latest release..."
+        msg_info "Downloading latest release..."
         gh release download -R ${PRIVATE_OWNER}/${PRIVATE_REPO} -p "*${SYSTEM_INFO}*" --clobber
     else
-        echo "Downloading release ${RELEASE_TAG}..."
+        msg_info "Downloading release ${RELEASE_TAG}..."
         gh release download -R ${PRIVATE_OWNER}/${PRIVATE_REPO} ${RELEASE_TAG} -p "*${SYSTEM_INFO}*" --clobber
     fi
 
@@ -142,22 +160,22 @@ install_zurg() {
     DOWNLOADED_FILE=$(ls -t zurg-* 2>/dev/null | head -n1)
 
     if [ -z "$DOWNLOADED_FILE" ]; then
-        echo "No matching asset found for your system ($SYSTEM_INFO)"
-        echo "Available assets:"
+        msg_error "No matching asset found for your system ($SYSTEM_INFO)"
+        msg_info "Available assets:"
         gh release view -R ${PRIVATE_OWNER}/${PRIVATE_REPO} --json assets --jq '.assets[].name'
         exit 1
     fi
 
-    echo "Asset downloaded successfully: $DOWNLOADED_FILE"
+    msg_ok "Asset downloaded successfully: $DOWNLOADED_FILE"
 
     # Check if the file is a zip archive
     if [[ "$DOWNLOADED_FILE" == *.zip ]]; then
-        echo "Extracting zip file..."
+        msg_info "Extracting zip file..."
         unzip -o "$DOWNLOADED_FILE"
         rm "$DOWNLOADED_FILE"
         BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
         if [ -z "$BINARY_FILE" ]; then
-            echo "Unable to find the extracted binary file."
+            msg_error "Unable to find the extracted binary file."
             exit 1
         fi
     else
@@ -170,21 +188,21 @@ install_zurg() {
     # Move the binary to a directory in PATH
     sudo mv "$BINARY_FILE" /usr/local/bin/zurg
 
-    echo "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
+    msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 
     # Create config directory and file
     sudo mkdir -p /etc/zurg
     create_zurg_config_file
 
-    echo "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
+    msg_ok "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
 }
 
 # Function to install public repo
 install_public_repo() {
     # List available releases
-    echo "Available Public Repo releases:"
+    msg_info "Available Public Repo releases:"
     if ! gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}; then
-        echo "Failed to list releases. Please check your internet connection and GitHub authentication."
+        msg_error "Failed to list releases. Please check your internet connection and GitHub authentication."
         exit 1
     fi
 
@@ -193,10 +211,10 @@ install_public_repo() {
 
     # Download the release
     if [ -z "$RELEASE_TAG" ]; then
-        echo "Downloading latest release..."
+        msg_info "Downloading latest release..."
         gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} -p "zurg-*${SYSTEM_INFO}.zip" --clobber
     else
-        echo "Downloading release ${RELEASE_TAG}..."
+        msg_info "Downloading release ${RELEASE_TAG}..."
         gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} ${RELEASE_TAG} -p "zurg-*${SYSTEM_INFO}.zip" --clobber
     fi
 
@@ -204,13 +222,13 @@ install_public_repo() {
     DOWNLOADED_FILE=$(ls -t zurg-*.zip 2>/dev/null | head -n1)
 
     if [ -z "$DOWNLOADED_FILE" ]; then
-        echo "No matching asset found for your system ($SYSTEM_INFO)"
-        echo "Available assets:"
+        msg_error "No matching asset found for your system ($SYSTEM_INFO)"
+        msg_info "Available assets:"
         gh release view -R ${PUBLIC_OWNER}/${PUBLIC_REPO} --json assets --jq '.assets[].name'
         exit 1
     fi
 
-    echo "Asset downloaded successfully: $DOWNLOADED_FILE"
+    msg_ok "Asset downloaded successfully: $DOWNLOADED_FILE"
 
     # Extract the zip file
     unzip -o "$DOWNLOADED_FILE"
@@ -219,7 +237,7 @@ install_public_repo() {
     # Find the extracted binary
     BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
     if [ -z "$BINARY_FILE" ]; then
-        echo "Unable to find the extracted binary file."
+        msg_error "Unable to find the extracted binary file."
         exit 1
     fi
 
@@ -229,7 +247,7 @@ install_public_repo() {
     # Move the binary to a directory in PATH
     sudo mv "$BINARY_FILE" /usr/local/bin/zurg
 
-    echo "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
+    msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 }
 
 # Function to create and start systemd service
@@ -266,17 +284,17 @@ EOF
     # Start the service
     sudo systemctl start zurg.service
 
-    echo "Zurg systemd service has been created and started."
+    msg_ok "Zurg systemd service has been created and started."
 }
 
 # Main script execution
 check_and_install_tools
 
 SYSTEM_INFO=$(get_system_info)
-echo "Detected system: $SYSTEM_INFO"
+msg_info "Detected system: $SYSTEM_INFO"
 
 # Prompt user to choose which repo to install
-echo "Which repository would you like to install?"
+msg_info "Which repository would you like to install?"
 echo "1. Zurg (Private repository)"
 echo "2. Public Repository"
 read -p "Enter your choice (1 or 2): " REPO_CHOICE
@@ -289,7 +307,7 @@ case $REPO_CHOICE in
         install_public_repo
         ;;
     *)
-        echo "Invalid choice. Exiting."
+        msg_error "Invalid choice. Exiting."
         exit 1
         ;;
 esac
@@ -301,4 +319,4 @@ create_zurg_config_file
 # Create and start systemd service
 create_and_start_systemd_service
 
-echo "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
+msg_ok "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"

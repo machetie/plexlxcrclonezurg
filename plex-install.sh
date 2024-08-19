@@ -54,7 +54,8 @@ $STD apt-get -y autoclean
 msg_ok "Cleaned"
 
 # Add prompt for Zurg and Rclone installation
-read -p "Would you like to add Zurg and Rclone? (y/n): " install_zurg_rclone
+read -p "Would you like to add Zurg and Rclone? (Y/n): " install_zurg_rclone
+install_zurg_rclone=${install_zurg_rclone:-Y}
 if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     msg_info "Installing Zurg"
     
@@ -75,7 +76,8 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     msg_ok "Installed Zurg and Rclone"
 
     # Add prompt for Docker installation
-    read -p "Would you like to install Docker? (y/n): " install_docker
+    read -p "Would you like to install Docker? (Y/n): " install_docker
+    install_docker=${install_docker:-Y}
     if [[ $install_docker =~ ^[Yy]$ ]]; then
         msg_info "Installing Docker"
         

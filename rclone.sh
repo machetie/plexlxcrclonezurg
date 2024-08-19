@@ -1,5 +1,23 @@
 #!/bin/bash
 
+source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+color
+verb_ip6
+catch_errors
+setting_up_container
+network_check
+update_os
+
+msg_info() {
+    echo -e "\e[1;32m[INFO]\e[0m $1"
+}
+msg_ok() {
+    echo -e "\e[1;32m[OK]\e[0m $1"
+}
+msg_error() {
+    echo -e "\e[1;31m[ERROR]\e[0m $1"
+}
+
 ORIGIN_REPO="https://downloads.rclone.org/rclone-current-linux-amd64.zip"
 INSTALL_DIR="/usr/local/bin"
 CONFIGFILE="/etc/rclone.conf" # default options
@@ -7,13 +25,13 @@ AUTOINSTALL=yes
 
 # Function to install required packages
 install() {
-    echo "'$1' is required but not installed, attempting to install..."
+    msg_info "'$1' is required but not installed, attempting to install..."
     sleep 1
     [ -z "$DISTRO_INSTALL" ] && check_distro
     if [ $EUID -ne 0 ]; then
-        sudo $DISTRO_INSTALL $1 || abort "Failed while trying to install '$1'. Please install it manually and try again."
+        sudo $DISTRO_INSTALL $1 || msg_error "Failed while trying to install '$1'. Please install it manually and try again."
     else
-        $DISTRO_INSTALL $1 || abort "Failed while trying to install '$1'. Please install it manually and try again."
+        $DISTRO_INSTALL $1 || msg_error "Failed while trying to install '$1'. Please install it manually and try again."
     fi
 }
 
@@ -66,13 +84,13 @@ yesno() {
 
 # Function to abort the script execution
 abort() {
-    echo "$@"
+    msg_error "$@"
     exit 1
 }
 
 # Function to install rclone
 install_rclone() {
-    echo "Installing rclone into '$INSTALL_DIR'..."
+    msg_info "Installing rclone into '$INSTALL_DIR'..."
     # Download and extract rclone
     temp_dir=$(mktemp -d)
     cd "$temp_dir"
@@ -83,7 +101,7 @@ install_rclone() {
     sudo cp rclone "$INSTALL_DIR" || abort "Failed to copy rclone to $INSTALL_DIR."
     sudo chown root:root "$INSTALL_DIR/rclone"
     sudo chmod 755 "$INSTALL_DIR/rclone"
-    echo "rclone installed successfully in '$INSTALL_DIR'."
+    msg_ok "rclone installed successfully in '$INSTALL_DIR'."
     # Clean up
     cd ~
     rm -rf "$temp_dir"
@@ -91,9 +109,9 @@ install_rclone() {
 
 ## Function to configure rclone
 configure_rclone() {
-    echo "Configuring rclone..."
+    msg_info "Configuring rclone..."
     if [ ! -f "$CONFIGFILE" ]; then
-        echo "Creating default rclone config..."
+        msg_info "Creating default rclone config..."
         cat << EOF | sudo tee "$CONFIGFILE" > /dev/null
 [zurg]
 type = webdav
@@ -101,7 +119,7 @@ url = http://zurg:9999/dav
 vendor = other
 pacer_min_sleep = 0
 EOF
-        echo "Default rclone config created at '$CONFIGFILE'."
+        msg_ok "Default rclone config created at '$CONFIGFILE'."
     fi
 
     # Create a symbolic link to the default config location
@@ -109,7 +127,7 @@ EOF
     ln -sf "$CONFIGFILE" /root/.config/rclone/rclone.conf
 
     rclone config --config "$CONFIGFILE" || abort "Failed to configure rclone."
-    echo "Configuration complete."
+    msg_ok "Configuration complete."
 }
 
 
@@ -120,10 +138,10 @@ install_fuse3() {
     fi
     if [ -f /etc/fuse.conf ]; then
         sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf || abort "Failed to modify /etc/fuse.conf"
-        echo "/etc/fuse.conf has been updated."
+        msg_info "/etc/fuse.conf has been updated."
     else
         echo "user_allow_other" | sudo tee -a /etc/fuse.conf > /dev/null
-        echo "/etc/fuse.conf created and updated."
+        msg_info "/etc/fuse.conf created and updated."
     fi
 }
 
@@ -136,17 +154,17 @@ create_mount_and_service() {
     fi
 
     if [ -d "$MOUNT_POINT" ]; then
-        echo "Mount point '$MOUNT_POINT' already exists."
+        msg_info "Mount point '$MOUNT_POINT' already exists."
     else
         sudo mkdir -p "$MOUNT_POINT" || abort "Failed to create mount point '$MOUNT_POINT'."
-        echo "Mount point '$MOUNT_POINT' created successfully."
+        msg_ok "Mount point '$MOUNT_POINT' created successfully."
     fi
 
-    echo -n "Would you like to create a systemd service for this mount? "
+    msg_info "Would you like to create a systemd service for this mount?"
     if yesno; then
         create_systemd_service "$MOUNT_POINT"
     else
-        echo "Systemd service creation skipped."
+        msg_info "Systemd service creation skipped."
     fi
 }
 
@@ -180,12 +198,12 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable rclone-${SERVICE_NAME}.service || abort "Failed to enable systemd service."
     sudo systemctl start rclone-${SERVICE_NAME}.service || abort "Failed to start systemd service."
-    echo "Systemd service 'rclone-${SERVICE_NAME}.service' created and started."
+    msg_ok "Systemd service 'rclone-${SERVICE_NAME}.service' created and started."
 }
 
 if [ $EUID -ne 0 ]; then
     echo
-    echo "This script needs to install files in system locations and will ask for sudo/root permissions now."
+    msg_info "This script needs to install files in system locations and will ask for sudo/root permissions now."
     sudo -v || abort "Root permissions are required for setup, cannot continue."
 elif [ ! -z "$SUDO_USER" ]; then
     echo
@@ -198,13 +216,26 @@ for req in wget unzip sudo; do
     fi
 done
 
+msg_info "Installing fuse3"
 install_fuse3
+msg_ok "Installed fuse3"
+
+msg_info "Installing rclone"
 install_rclone
+msg_ok "Installed rclone"
+
+msg_info "Configuring rclone"
 configure_rclone
+msg_ok "Configured rclone"
+
+msg_info "Creating mount point and service"
 create_mount_and_service
+msg_ok "Created mount point and service"
 
 echo
-echo -n "Would you like to check the rclone version now? "
+msg_info "Would you like to check the rclone version now?"
 if yesno; then
     rclone version || abort "Failed to verify rclone installation."
 fi
+
+msg_ok "Rclone setup completed successfully"
