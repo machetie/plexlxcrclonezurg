@@ -51,16 +51,6 @@ check_and_install_tools() {
         install_package gh
     fi
 
-    # Check if gh is authenticated
-    if ! gh auth status &> /dev/null; then
-        msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
-        gh auth login
-        if ! gh auth status &> /dev/null; then
-            msg_error "Failed to authenticate GitHub CLI. Please try again manually by running 'gh auth login'."
-            exit 1
-        fi
-    fi
-
     if ! command -v jq &> /dev/null; then
         install_package jq
     fi
@@ -138,6 +128,10 @@ install_zurg() {
     if ! gh auth status &> /dev/null; then
         msg_info "Please authenticate with GitHub CLI"
         gh auth login
+        if ! gh auth status &> /dev/null; then
+            msg_error "Failed to authenticate GitHub CLI. Please try again manually by running 'gh auth login'."
+            exit 1
+        fi
     fi
 
     # List available releases

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
-color
-verb_ip6
-catch_errors
-setting_up_container
-network_check
-update_os
+# Remove or comment out these lines as they are not defined
+# source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+# color
+# verb_ip6
+# catch_errors
+# setting_up_container
+# network_check
+# update_os
 
 msg_info() {
     echo -e "\e[1;32m[INFO]\e[0m $1"
