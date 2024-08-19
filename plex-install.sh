@@ -25,6 +25,13 @@ $STD apt-get install -y jq
 $STD apt-get install -y fuse3
 msg_ok "Installed Dependencies"
 
+# Use arch_check function to determine system architecture
+arch_check
+SYSTEM_INFO="${OS}-${ARCH}"
+
+msg_info "System Info: $SYSTEM_INFO"
+msg_ok "Determined System Info"
+
 msg_info "Setting Up Hardware Acceleration"
 $STD apt-get -y install {va-driver-all,ocl-icd-libopencl1,intel-opencl-icd,vainfo,intel-gpu-tools}
 if [[ "$CTTYPE" == "0" ]]; then
@@ -55,8 +62,6 @@ read -r -p "Do you want to install Zurg from private repo? [y/N] " response
 if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
   msg_ok "Installing Zurg from private repository"
   
-  msg_info "Preparing for GitHub authentication"
-  msg_ok "Ready for GitHub token"
   # Prompt for GitHub token
   read -p "Enter your GitHub token: " GITHUB_TOKEN
   
@@ -73,8 +78,6 @@ if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
   gh release list -R debridmediamanager/zurg --limit 10
   msg_ok "Available Zurg releases:"
   # Prompt user to select a release
-  msg_info "Preparing to select release"
-  msg_ok "Ready for release selection"
   read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
 
   # Download the release
@@ -120,15 +123,11 @@ else
 fi
 
 # Prompt user for adding default config and systemd service
-msg_info "Preparing to set up Zurg configuration"
-msg_ok "Ready for configuration choice"
 read -p "Would you like to add default config for zurg and add to systemd service? (y/n): " ADD_CONFIG_AND_SERVICE
 if [[ "$ADD_CONFIG_AND_SERVICE" =~ ^[Yy]$ ]]; then
   # Create default config
   msg_info "Creating default config for Zurg..."
   mkdir -p /etc/zurg
-  msg_info "Preparing to set up Real-Debrid API"
-  msg_ok "Ready for Real-Debrid API token"
   # Prompt for Real-Debrid API token
   read -p "Enter your Real-Debrid API token: " RD_TOKEN
   cat > /etc/zurg/config.yaml <<EOL
@@ -221,8 +220,6 @@ else
 fi
 msg_ok "Configured fuse3"
 
-msg_info "Preparing to set up mount point"
-msg_ok "Ready for mount point input"
 read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
 mkdir -p "$MOUNT_POINT"
 # Create systemd service for rcloned
