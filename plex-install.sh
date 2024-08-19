@@ -56,6 +56,7 @@ read -r -p "Would you like to add Zurg and Rclone? <y/N> " prompt
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     msg_ok "User chose to install Zurg and Rclone"
     msg_info "Installing Zurg and Rclone"
+    msg_ok "Installing Zurg and Rclone"
     echo
 
     # Function to prompt user
