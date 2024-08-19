@@ -53,10 +53,11 @@ msg_ok "Installed Plex Media Server"
 
 read -r -p "Do you want to install Zurg from private repo? [y/N] " response
 if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
-  msg_ok "Installing Zurg from private repository"
+  msg_info "Installing Zurg from private repository"
   
-  # Prompt for GitHub token
-  read -r -p "Enter your GitHub token: " GITHUB_TOKEN
+# Prompt for GitHub token with white text
+  echo -e "\e[1;37mEnter your GitHub token:\e[0m"
+  read -r GITHUB_TOKEN
   
   # Authenticate with GitHub
   msg_info "Authenticating with GitHub..."
@@ -108,6 +109,7 @@ else
   fi
 fi
 if [ -n "$BINARY_FILE" ]; then
+
   chmod +x "$BINARY_FILE"
   mv "$BINARY_FILE" /usr/local/bin/zurg
   msg_ok "Zurg installed successfully"
