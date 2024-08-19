@@ -104,6 +104,7 @@ get_system_info() {
     esac
     echo "${OS}-${ARCH}"
 }
+export -f get_system_info
 
 # Global variable for Real-Debrid API token
 RD_TOKEN=""
