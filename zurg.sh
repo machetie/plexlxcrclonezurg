@@ -193,17 +193,10 @@ install_zurg() {
 
 # Function to install public repo
 install_public_repo() {
-    # Check if gh is authenticated
-    if ! gh auth status &> /dev/null; then
-        msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
-        msg_info "After authentication, please run this script again."
-        exit 1
-    fi
-
     # List available releases
     msg_info "Available Public Repo releases:"
     if ! gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}; then
-        msg_error "Failed to list releases. Please check your internet connection and GitHub authentication."
+        msg_error "Failed to list releases. Please check your internet connection."
         exit 1
     fi
 
@@ -213,10 +206,16 @@ install_public_repo() {
     # Download the release
     if [ -z "$RELEASE_TAG" ]; then
         msg_info "Downloading latest release..."
-        gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} -p "zurg-*${SYSTEM_INFO}.zip" --clobber
+        if ! gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} -p "zurg-*${SYSTEM_INFO}.zip" --clobber; then
+            msg_error "Failed to download the release. Please check your internet connection."
+            exit 1
+        fi
     else
         msg_info "Downloading release ${RELEASE_TAG}..."
-        gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} ${RELEASE_TAG} -p "zurg-*${SYSTEM_INFO}.zip" --clobber
+        if ! gh release download -R ${PUBLIC_OWNER}/${PUBLIC_REPO} ${RELEASE_TAG} -p "zurg-*${SYSTEM_INFO}.zip" --clobber; then
+            msg_error "Failed to download the release. Please check your internet connection or the release tag."
+            exit 1
+        fi
     fi
 
     # Find the downloaded file
@@ -293,13 +292,6 @@ check_and_install_tools
 
 SYSTEM_INFO=$(get_system_info)
 msg_info "Detected system: $SYSTEM_INFO"
-
-# Check if gh is authenticated before prompting for repo choice
-if ! gh auth status &> /dev/null; then
-    msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
-    msg_info "After authentication, please run this script again."
-    exit 0
-fi
 
 # Prompt user to choose which repo to install
 msg_info "Which repository would you like to install?"
