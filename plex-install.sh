@@ -52,9 +52,8 @@ $STD apt-get -y autoclean
 msg_ok "Cleaned"
 
 # Add prompt for Zurg and Rclone installation
-read -p "Would you like to add Zurg and Rclone? (Y/n): " install_zurg_rclone
-install_zurg_rclone=${install_zurg_rclone:-Y}
-if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
+read -r -p "Would you like to add Zurg and Rclone? <y/N> " prompt
+if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     msg_info "Installing Zurg and Rclone"
     echo
     
@@ -62,11 +61,10 @@ if [[ $install_zurg_rclone =~ ^[Yy]$ ]]; then
     install_zurg() {
         msg_info "Zurg Installation"
         echo
-        read -p "Do you want to install from the private repository? (y/N): " use_private_repo
-        use_private_repo=${use_private_repo:-N}
+        read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         echo
 
-        if [[ $use_private_repo =~ ^[Yy]$ ]]; then
+        if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_info "Installing from private repository"
             echo
             read -p "Enter your GitHub token: " GITHUB_TOKEN
