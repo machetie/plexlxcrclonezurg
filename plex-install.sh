@@ -53,11 +53,12 @@ msg_ok "Installed Plex Media Server"
 
 read -r -p "Do you want to install Zurg from private repo? [y/N] " response
 if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
-  msg_info "Installing Zurg from private repository"
+  msg_ok "Installing Zurg from private repository"
   
-# Prompt for GitHub token with white text
-  echo -e "\e[1;37mEnter your GitHub token:\e[0m"
-  read -r GITHUB_TOKEN
+  msg_info "Preparing for GitHub authentication"
+  msg_ok "Ready for GitHub token"
+  # Prompt for GitHub token
+  read -p "Enter your GitHub token: " GITHUB_TOKEN
   
   # Authenticate with GitHub
   msg_info "Authenticating with GitHub..."
@@ -68,10 +69,12 @@ if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
   msg_ok "GitHub authentication successful."
 
   # List available releases
-  msg_info "Available Zurg releases:"
+  msg_info "Fetching available Zurg releases:"
   gh release list -R debridmediamanager/zurg --limit 10
-
+  msg_ok "Available Zurg releases:"
   # Prompt user to select a release
+  msg_info "Preparing to select release"
+  msg_ok "Ready for release selection"
   read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
 
   # Download the release
@@ -109,7 +112,6 @@ else
   fi
 fi
 if [ -n "$BINARY_FILE" ]; then
-
   chmod +x "$BINARY_FILE"
   mv "$BINARY_FILE" /usr/local/bin/zurg
   msg_ok "Zurg installed successfully"
@@ -118,11 +120,15 @@ else
 fi
 
 # Prompt user for adding default config and systemd service
+msg_info "Preparing to set up Zurg configuration"
+msg_ok "Ready for configuration choice"
 read -p "Would you like to add default config for zurg and add to systemd service? (y/n): " ADD_CONFIG_AND_SERVICE
 if [[ "$ADD_CONFIG_AND_SERVICE" =~ ^[Yy]$ ]]; then
   # Create default config
   msg_info "Creating default config for Zurg..."
   mkdir -p /etc/zurg
+  msg_info "Preparing to set up Real-Debrid API"
+  msg_ok "Ready for Real-Debrid API token"
   # Prompt for Real-Debrid API token
   read -p "Enter your Real-Debrid API token: " RD_TOKEN
   cat > /etc/zurg/config.yaml <<EOL
@@ -215,6 +221,8 @@ else
 fi
 msg_ok "Configured fuse3"
 
+msg_info "Preparing to set up mount point"
+msg_ok "Ready for mount point input"
 read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
 mkdir -p "$MOUNT_POINT"
 # Create systemd service for rcloned
