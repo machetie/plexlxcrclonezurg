@@ -54,48 +54,56 @@ msg_ok "Cleaned"
 # Add prompt for Zurg and Rclone installation
 read -r -p "Would you like to add Zurg and Rclone? <y/N> " prompt
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
+    msg_ok "User chose to install Zurg and Rclone"
     msg_info "Installing Zurg and Rclone"
     echo
-    
+
+    # Function to prompt user
+    prompt_user() {
+        local prompt="$1"
+        local variable_name="$2"
+        read -r -p "$prompt" "$variable_name"
+        echo
+    }
+
+    # Function to handle GitHub operations
+    github_ops() {
+        prompt_user "Enter your GitHub token: " GITHUB_TOKEN
+        
+        msg_info "Authenticating with GitHub..."
+        if ! gh auth login --with-token <<< "$GITHUB_TOKEN"; then
+            msg_error "GitHub authentication failed. Please check your token and try again."
+            return 1
+        fi
+        msg_ok "GitHub authentication successful."
+
+        msg_info "Available Zurg releases:"
+        gh release list -R debridmediamanager/zurg --limit 10 | cat
+        echo
+
+        prompt_user "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
+
+        local download_cmd="gh release download -R debridmediamanager/zurg"
+        if [ -z "$RELEASE_TAG" ]; then
+            msg_info "Downloading latest release..."
+            $download_cmd -p "*linux-amd64*" --clobber
+        else
+            msg_info "Downloading release ${RELEASE_TAG}..."
+            $download_cmd "$RELEASE_TAG" -p "*linux-amd64*" --clobber
+        fi
+    }
+
     # Zurg Installation
     install_zurg() {
         msg_info "Zurg Installation"
         echo
-        read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
+        prompt_user "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
+            msg_ok "User chose to install from private repository"
             msg_info "Installing from private repository"
-            echo
-            read -r -p "Enter your GitHub token: " GITHUB_TOKEN
-            echo
-            
-            # Authenticate with GitHub
-            msg_info "Authenticating with GitHub..."
-            gh auth login --with-token <<< "$GITHUB_TOKEN"
-            if [ $? -ne 0 ]; then
-                msg_error "GitHub authentication failed. Please check your token and try again."
-                exit 1
-            fi
-            msg_ok "GitHub authentication successful."
-            echo
-
-            # List available releases without pager
-            msg_info "Available Zurg releases:"
-            gh release list -R debridmediamanager/zurg --limit 10 | cat
-            echo
-
-            # Prompt user to select a release
-            read -r -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
-            echo
-
-            # Download the release
-            if [ -z "$RELEASE_TAG" ]; then
-                msg_info "Downloading latest release..."
-                gh release download -R debridmediamanager/zurg -p "*linux-amd64*" --clobber
-            else
-                msg_info "Downloading release ${RELEASE_TAG}..."
-                gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
-            fi
+            github_ops
         else
+            msg_ok "User chose to install from public repository"
             msg_info "Installing from public repository"
             DOWNLOAD_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
             FILENAME="zurg-v0.9.3-final-linux-amd64.zip"
@@ -105,7 +113,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
 
             if [ ! -f "$FILENAME" ]; then
                 msg_error "Failed to download the file. Please check your internet connection and try again."
-                exit 1
+                return 1
             fi
 
             msg_ok "File downloaded successfully: $FILENAME"
@@ -120,7 +128,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
 
         if [ -z "$BINARY_FILE" ]; then
             msg_error "Unable to find the Zurg binary file."
-            exit 1
+            return 1
         fi
 
         # Make the binary executable
@@ -138,7 +146,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     configure_zurg() {
         msg_info "Creating Zurg Config"
         mkdir -p /etc/zurg
-        read -r -p "Enter your Real-Debrid API token: " RD_TOKEN
+        prompt_user "Enter your Real-Debrid API token: " RD_TOKEN
 
         cat > /etc/zurg/config.yml << EOL
 # Zurg configuration version
@@ -181,7 +189,7 @@ EOL
 
     configure_zurg
 
-    # Zurg Systemd Service
+    # Setup Zurg Systemd Service
     setup_zurg_service() {
         msg_info "Setting Up Zurg Systemd Service"
         cat << EOF | tee /etc/systemd/system/zurg.service
@@ -204,13 +212,8 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 EOF
 
-        # Reload systemd to recognize the new service
         systemctl daemon-reload
-
-        # Enable the service to start on boot
         systemctl enable zurg.service
-
-        # Start the service
         systemctl start zurg.service
 
         msg_ok "Zurg systemd service has been created and started."
@@ -266,7 +269,7 @@ EOF
     # Create mount point and service
     create_mount_service() {
         msg_info "Creating mount point and service"
-        read -r -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
+        prompt_user "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
         mkdir -p "$MOUNT_POINT"
 
         cat << EOF > /etc/systemd/system/rclone-zurg.service
@@ -301,19 +304,21 @@ EOF
     
     msg_ok "Installed Zurg and Rclone"
 
-    # Add prompt for Docker installation
-    read -r -p "Would you like to install Docker? <y/N> " install_docker
+    # Docker Installation
+    prompt_user "Would you like to install Docker? <y/N> " install_docker
     if [[ ${install_docker,,} =~ ^(y|yes)$ ]]; then
+        msg_ok "User chose to install Docker"
         msg_info "Installing Docker"
-        
-        # Download and execute the Docker installation script
-        curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/Docker-install.sh -o docker_install.sh
-        chmod +x docker_install.sh
-        ./docker_install.sh
-        rm docker_install.sh
-        
-        msg_ok "Installed Docker"
+        if curl -sSL https://raw.githubusercontent.com/machetie/plexlxcrclonezurg/main/Docker-install.sh | bash; then
+            msg_ok "Installed Docker"
+        else
+            msg_error "Failed to install Docker"
+        fi
+    else
+        msg_ok "User chose not to install Docker"
     fi
+else
+    msg_ok "User chose not to install Zurg and Rclone"
 fi
 
 msg_ok "Plex Media Server installation completed successfully!"
