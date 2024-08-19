@@ -9,9 +9,9 @@ PUBLIC_REPO="zurg-testing"
 # Function to install packages
 install_package() {
     if [ -x "$(command -v apt-get)" ]; then
-        sudo apt-get update && sudo apt-get install -y $1
+        apt-get update && apt-get install -y $1
     elif [ -x "$(command -v yum)" ]; then
-        sudo yum install -y $1
+        yum install -y $1
     elif [ -x "$(command -v brew)" ]; then
         brew install $1
     else
@@ -161,7 +161,7 @@ install_zurg() {
     chmod +x "$BINARY_FILE"
 
     # Move the binary to a directory in PATH
-    sudo mv "$BINARY_FILE" /usr/local/bin/zurg
+    mv "$BINARY_FILE" /usr/local/bin/zurg
 
     msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 }
@@ -196,7 +196,7 @@ install_public_repo() {
     chmod +x "$BINARY_FILE"
 
     # Move the binary to a directory in PATH
-    sudo mv "$BINARY_FILE" /usr/local/bin/zurg
+    mv "$BINARY_FILE" /usr/local/bin/zurg
 
     msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 }
@@ -204,7 +204,7 @@ install_public_repo() {
 # Function to create and start systemd service
 create_and_start_systemd_service() {
     # Create systemd service file
-    cat << EOF | sudo tee /etc/systemd/system/zurg.service
+    cat << EOF | tee /etc/systemd/system/zurg.service
 [Unit]
 Description=zurg
 After=network.target
@@ -225,18 +225,23 @@ WantedBy=multi-user.target
 EOF
 
     # Reload systemd to recognize the new service
-    sudo systemctl daemon-reload
+    systemctl daemon-reload
 
     # Enable the service to start on boot
-    sudo systemctl enable zurg.service
+    systemctl enable zurg.service
 
     # Start the service
-    sudo systemctl start zurg.service
+    systemctl start zurg.service
 
     msg_ok "Zurg systemd service has been created and started."
 }
 
 # Main script execution
+if [ $EUID -ne 0 ]; then
+    msg_error "This script must be run as root. Please use sudo or run as root."
+    exit 1
+fi
+
 check_and_install_tools
 
 SYSTEM_INFO=$(get_system_info)
@@ -267,7 +272,7 @@ case $REPO_CHOICE in
 esac
 
 # Create config directory and file
-sudo mkdir -p /etc/zurg
+mkdir -p /etc/zurg
 create_zurg_config_file
 
 # Create and start systemd service

@@ -29,11 +29,7 @@ install() {
     msg_info "'$1' is required but not installed, attempting to install..."
     sleep 1
     [ -z "$DISTRO_INSTALL" ] && check_distro
-    if [ $EUID -ne 0 ]; then
-        sudo $DISTRO_INSTALL $1 || msg_error "Failed while trying to install '$1'. Please install it manually and try again."
-    else
-        $DISTRO_INSTALL $1 || msg_error "Failed while trying to install '$1'. Please install it manually and try again."
-    fi
+    $DISTRO_INSTALL $1 || msg_error "Failed while trying to install '$1'. Please install it manually and try again."
 }
 
 # Function to detect the Linux distribution
@@ -99,9 +95,9 @@ install_rclone() {
     unzip rclone.zip || abort "Failed to unzip rclone."
     # Move rclone binary to /usr/local/bin
     cd rclone-*-linux-amd64
-    sudo cp rclone "$INSTALL_DIR" || abort "Failed to copy rclone to $INSTALL_DIR."
-    sudo chown root:root "$INSTALL_DIR/rclone"
-    sudo chmod 755 "$INSTALL_DIR/rclone"
+    cp rclone "$INSTALL_DIR" || abort "Failed to copy rclone to $INSTALL_DIR."
+    chown root:root "$INSTALL_DIR/rclone"
+    chmod 755 "$INSTALL_DIR/rclone"
     msg_ok "rclone installed successfully in '$INSTALL_DIR'."
     # Clean up
     cd ~
@@ -113,7 +109,7 @@ configure_rclone() {
     msg_info "Configuring rclone..."
     if [ ! -f "$CONFIGFILE" ]; then
         msg_info "Creating default rclone config..."
-        cat << EOF | sudo tee "$CONFIGFILE" > /dev/null
+        cat << EOF > "$CONFIGFILE"
 [zurg]
 type = webdav
 url = http://zurg:9999/dav
@@ -138,10 +134,10 @@ install_fuse3() {
         install fuse3
     fi
     if [ -f /etc/fuse.conf ]; then
-        sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf || abort "Failed to modify /etc/fuse.conf"
+        sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf || abort "Failed to modify /etc/fuse.conf"
         msg_info "/etc/fuse.conf has been updated."
     else
-        echo "user_allow_other" | sudo tee -a /etc/fuse.conf > /dev/null
+        echo "user_allow_other" > /etc/fuse.conf
         msg_info "/etc/fuse.conf created and updated."
     fi
 }
@@ -157,7 +153,7 @@ create_mount_and_service() {
     if [ -d "$MOUNT_POINT" ]; then
         msg_info "Mount point '$MOUNT_POINT' already exists."
     else
-        sudo mkdir -p "$MOUNT_POINT" || abort "Failed to create mount point '$MOUNT_POINT'."
+        mkdir -p "$MOUNT_POINT" || abort "Failed to create mount point '$MOUNT_POINT'."
         msg_ok "Mount point '$MOUNT_POINT' created successfully."
     fi
 
@@ -175,7 +171,7 @@ create_systemd_service() {
     SERVICE_NAME=$(basename "$MOUNT_POINT")
     
     # Example service configuration (to be updated with default settings)
-    sudo tee /etc/systemd/system/rclone-${SERVICE_NAME}.service > /dev/null << EOF
+    tee /etc/systemd/system/rclone-${SERVICE_NAME}.service > /dev/null << EOF
 [Unit]
 Description=RClone Mount for ${SERVICE_NAME}
 After=network-online.target
@@ -196,22 +192,13 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable rclone-${SERVICE_NAME}.service || abort "Failed to enable systemd service."
-    sudo systemctl start rclone-${SERVICE_NAME}.service || abort "Failed to start systemd service."
+    systemctl daemon-reload
+    systemctl enable rclone-${SERVICE_NAME}.service || abort "Failed to enable systemd service."
+    systemctl start rclone-${SERVICE_NAME}.service || abort "Failed to start systemd service."
     msg_ok "Systemd service 'rclone-${SERVICE_NAME}.service' created and started."
 }
 
-if [ $EUID -ne 0 ]; then
-    echo
-    msg_info "This script needs to install files in system locations and will ask for sudo/root permissions now."
-    sudo -v || abort "Root permissions are required for setup, cannot continue."
-elif [ -n "${SUDO_USER:-}" ]; then
-    echo
-    abort "This script will ask for sudo as necessary, but you should not run it as sudo. Please try again."
-fi
-
-for req in wget unzip sudo; do
+for req in wget unzip; do
     if ! hash $req 2>/dev/null; then
         install $req
     fi
