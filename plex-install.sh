@@ -54,23 +54,13 @@ msg_ok "Cleaned"
 # Add prompt for Zurg and Rclone installation
 read -r -p "Would you like to add Zurg and Rclone? <y/N> " prompt
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
-    msg_ok "User chose to install Zurg and Rclone"
-    msg_info "Installing Zurg and Rclone"
-    msg_ok "Installing Zurg and Rclone"
     echo
-
-    # Function to prompt user
-    prompt_user() {
-        local prompt="$1"
-        local variable_name="$2"
-        read -r -p "$prompt" "$variable_name"
-        echo
-    }
 
     # Function to handle GitHub operations
     github_ops() {
-        prompt_user "Enter your GitHub token: " GITHUB_TOKEN
-        
+        read -r -p "Enter your GitHub token: " GITHUB_TOKEN
+        echo
+
         msg_info "Authenticating with GitHub..."
         if ! gh auth login --with-token <<< "$GITHUB_TOKEN"; then
             msg_error "GitHub authentication failed. Please check your token and try again."
@@ -82,7 +72,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
         gh release list -R debridmediamanager/zurg --limit 10 | cat
         echo
 
-        prompt_user "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
+        read -r -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
 
         local download_cmd="gh release download -R debridmediamanager/zurg"
         if [ -z "$RELEASE_TAG" ]; then
@@ -97,7 +87,6 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     # Zurg Installation
     install_zurg() {
         msg_info "Zurg Installation"
-        msg_ok "Starting Zurg Installation"
         echo
         read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
