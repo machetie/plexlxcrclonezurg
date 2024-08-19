@@ -62,8 +62,6 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
         msg_info "Zurg Installation"
         echo
         read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
-        echo
-
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_info "Installing from private repository"
             echo
