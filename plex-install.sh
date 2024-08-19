@@ -56,15 +56,16 @@ read -r -p "Would you like to add Zurg and Rclone? <y/N> " prompt
 if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     msg_info "Installing Zurg and Rclone"
     echo
-
+    
     # Zurg Installation
     install_zurg() {
-        echo -e "\n${YW}?${CL} Do you want to install from the private repository? <y/N> "
-        read -r use_private_repo
+        msg_info "Zurg Installation"
+        echo
+        read -r -p "Do you want to install from the private repository? <y/N> " use_private_repo
         if [[ ${use_private_repo,,} =~ ^(y|yes)$ ]]; then
             msg_info "Installing from private repository"
             echo
-            read -p "Enter your GitHub token: " GITHUB_TOKEN
+            read -r -p "Enter your GitHub token: " GITHUB_TOKEN
             echo
             
             # Authenticate with GitHub
@@ -83,7 +84,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
             echo
 
             # Prompt user to select a release
-            read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
+            read -r -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
             echo
 
             # Download the release
@@ -137,7 +138,7 @@ if [[ ${prompt,,} =~ ^(y|yes)$ ]]; then
     configure_zurg() {
         msg_info "Creating Zurg Config"
         mkdir -p /etc/zurg
-        read -p "Enter your Real-Debrid API token: " RD_TOKEN
+        read -r -p "Enter your Real-Debrid API token: " RD_TOKEN
 
         cat > /etc/zurg/config.yml << EOL
 # Zurg configuration version
@@ -265,7 +266,7 @@ EOF
     # Create mount point and service
     create_mount_service() {
         msg_info "Creating mount point and service"
-        read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
+        read -r -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
         mkdir -p "$MOUNT_POINT"
 
         cat << EOF > /etc/systemd/system/rclone-zurg.service
@@ -301,9 +302,8 @@ EOF
     msg_ok "Installed Zurg and Rclone"
 
     # Add prompt for Docker installation
-    read -p "Would you like to install Docker? (Y/n): " install_docker
-    install_docker=${install_docker:-Y}
-    if [[ $install_docker =~ ^[Yy]$ ]]; then
+    read -r -p "Would you like to install Docker? <y/N> " install_docker
+    if [[ ${install_docker,,} =~ ^(y|yes)$ ]]; then
         msg_info "Installing Docker"
         
         # Download and execute the Docker installation script
