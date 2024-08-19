@@ -53,10 +53,10 @@ msg_ok "Installed Plex Media Server"
 
 read -r -p "Do you want to install Zurg from private repo? [y/N] " response
 if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
-  msg_info "Installing Zurg from private repository"
+  msg_ok "Installing Zurg from private repository"
   
   # Prompt for GitHub token
-  read -p "Enter your GitHub token: " GITHUB_TOKEN
+  read -r -p "Enter your GitHub token: " GITHUB_TOKEN
   
   # Authenticate with GitHub
   msg_info "Authenticating with GitHub..."
