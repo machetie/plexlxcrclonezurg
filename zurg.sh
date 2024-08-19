@@ -61,10 +61,19 @@ get_system_info() {
     echo "${OS}-${ARCH}"
 }
 
+# Global variable for Real-Debrid API token
+RD_TOKEN=""
+
+# Function to get Real-Debrid API token
+get_rd_token() {
+    if [ -z "$RD_TOKEN" ]; then
+        read -p "Enter your Real-Debrid API token: " RD_TOKEN
+    fi
+}
+
 # Function to create config.yml for Zurg
 create_zurg_config_file() {
-    # Prompt for Real-Debrid API token
-    read -p "Enter your Real-Debrid API token: " RD_TOKEN
+    get_rd_token
 
     cat > /etc/zurg/config.yml << EOL
 # Zurg configuration version
@@ -155,12 +164,6 @@ install_zurg() {
     sudo mv "$BINARY_FILE" /usr/local/bin/zurg
 
     echo "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
-
-    # Create config directory and file
-    sudo mkdir -p /etc/zurg
-    create_zurg_config_file
-
-    echo "Zurg installation complete. Your config file is located at /etc/zurg/config.yml"
 }
 
 # Function to install public repo
