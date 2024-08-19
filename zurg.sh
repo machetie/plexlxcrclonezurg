@@ -193,6 +193,13 @@ install_zurg() {
 
 # Function to install public repo
 install_public_repo() {
+    # Check if gh is authenticated
+    if ! gh auth status &> /dev/null; then
+        msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
+        msg_info "After authentication, please run this script again."
+        exit 1
+    fi
+
     # List available releases
     msg_info "Available Public Repo releases:"
     if ! gh release list -R ${PUBLIC_OWNER}/${PUBLIC_REPO}; then
@@ -286,6 +293,13 @@ check_and_install_tools
 
 SYSTEM_INFO=$(get_system_info)
 msg_info "Detected system: $SYSTEM_INFO"
+
+# Check if gh is authenticated before prompting for repo choice
+if ! gh auth status &> /dev/null; then
+    msg_info "GitHub CLI is not authenticated. Please run 'gh auth login' to authenticate."
+    msg_info "After authentication, please run this script again."
+    exit 0
+fi
 
 # Prompt user to choose which repo to install
 msg_info "Which repository would you like to install?"
