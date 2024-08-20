@@ -51,81 +51,97 @@ else
 fi
 msg_ok "Installed Plex Media Server"
 
-read -r -p "Do you want to install Zurg from private repo? [y/N] " response
-if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
-  msg_ok "Installing Zurg from private repository"
-  
-  # Prompt for GitHub token
-  read -p "Enter your GitHub token: " GITHUB_TOKEN
-  
-  # Authenticate with GitHub
-  msg_info "Authenticating with GitHub..."
-  if ! gh auth login --with-token <<< "$GITHUB_TOKEN"; then
-    msg_error "GitHub authentication failed. Please check your token and try again."
-    exit 1
-  fi
-  msg_ok "GitHub authentication successful."
-
-  # List available releases
-  msg_info "Fetching available Zurg releases:"
-  gh release list -R debridmediamanager/zurg --limit 10 | cat
-  msg_ok "Available Zurg releases:"
-  # Prompt user to select a release
-  read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
-
-  # Download the release
-  if [ -z "$RELEASE_TAG" ]; then
-    msg_info "Downloading latest release..."
-    gh release download -R debridmediamanager/zurg -p "*${SYSTEM_INFO}*" --clobber
-  else
-    msg_info "Downloading release ${RELEASE_TAG}..."
-    gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
-  fi
-
-else
-  msg_info "Installing Zurg from public repository"
-  DOWNLOAD_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
-  FILENAME="zurg-v0.9.3-final-linux-amd64.zip"
-
-  msg_info "Downloading Zurg..."
-  if wget "$DOWNLOAD_URL" -O "$FILENAME"; then
-    msg_ok "Downloaded Zurg successfully"
+install_zurg() {
+  read -r -p "Do you want to install Zurg from private repo? [y/N] " response
+  if [[ "${response,,}" =~ ^(y|yes)$ ]]; then
+    echo "Installing Zurg from private repository"
     
-    msg_info "Extracting Zurg..."
-    if unzip -o "$FILENAME"; then
-      msg_ok "Extracted Zurg successfully"
-      
-      BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
-    else
-      msg_error "Failed to extract Zurg. Installation unsuccessful."
-    fi
+    # Prompt for GitHub token
+    read -p "Enter your GitHub token: " GITHUB_TOKEN
     
-    rm "$FILENAME"
-  else
-    msg_error "Failed to download Zurg. Installation unsuccessful."
-  fi
-fi
-# Find the downloaded file
-  BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
-  if [ -z "$BINARY_FILE" ]; then
-      msg_error "Unable to find the Zurg binary file."
+    # Authenticate with GitHub
+    echo "Authenticating with GitHub..."
+    if ! gh auth login --with-token <<< "$GITHUB_TOKEN"; then
+      echo "GitHub authentication failed. Please check your token and try again."
       exit 1
+    fi
+    echo "GitHub authentication successful."
+
+    # List available releases
+    echo "Fetching available Zurg releases:"
+    gh release list -R debridmediamanager/zurg --limit 10 | cat
+    echo "Available Zurg releases:"
+    # Prompt user to select a release
+    read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
+
+    # Download the release
+    if [ -z "$RELEASE_TAG" ]; then
+      echo "Downloading latest release..."
+      gh release download -R debridmediamanager/zurg -p "*${SYSTEM_INFO}*" --clobber
+    else
+      echo "Downloading release ${RELEASE_TAG}..."
+      gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
+    fi
+
+    # Find the downloaded file
+    BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
+    if [ -z "$BINARY_FILE" ]; then
+      echo "Unable to find the Zurg binary file."
+      exit 1
+    fi
+
+  else
+    echo "Installing Zurg from public repository"
+    DOWNLOAD_URL="https://github.com/debridmediamanager/zurg-testing/releases/download/v0.9.3-final/zurg-v0.9.3-final-linux-amd64.zip"
+    FILENAME="zurg-v0.9.3-final-linux-amd64.zip"
+
+    echo "Downloading Zurg..."
+    if wget "$DOWNLOAD_URL" -O "$FILENAME"; then
+      echo "Downloaded Zurg successfully"
+      
+      echo "Extracting Zurg..."
+      if unzip -o "$FILENAME"; then
+        echo "Extracted Zurg successfully"
+        
+        BINARY_FILE=$(ls zurg* 2>/dev/null | grep -v '\.zip$' | head -n1)
+        if [ -z "$BINARY_FILE" ]; then
+          echo "Unable to find the Zurg binary file after extraction."
+          exit 1
+        fi
+      else
+        echo "Failed to extract Zurg. Installation unsuccessful."
+        exit 1
+      fi
+      
+      rm "$FILENAME"
+    else
+      echo "Failed to download Zurg. Installation unsuccessful."
+      exit 1
+    fi
   fi
+
   # Make the binary executable
   chmod +x "$BINARY_FILE"
+
   # Move the binary to a directory in PATH
   mv "$BINARY_FILE" /usr/local/bin/zurg
-  msg_ok "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
 
-# Prompt user for adding default config and systemd service
-read -p "Would you like to add default config for zurg and add to systemd service? (y/n): " ADD_CONFIG_AND_SERVICE
-if [[ "$ADD_CONFIG_AND_SERVICE" =~ ^[Yy]$ ]]; then
-  # Create default config
-  msg_info "Creating default config for Zurg..."
-  mkdir -p /etc/zurg
-  # Prompt for Real-Debrid API token
-  read -p "Enter your Real-Debrid API token: " RD_TOKEN
-  cat > /etc/zurg/config.yaml <<EOL
+  if [ $? -eq 0 ]; then
+    echo "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
+  else
+    echo "Failed to move Zurg binary to /usr/local/bin."
+    exit 1
+  fi
+
+  # Prompt user for adding default config and systemd service
+  read -p "Would you like to add default config for zurg and add to systemd service? (y/n): " ADD_CONFIG_AND_SERVICE
+  if [[ "$ADD_CONFIG_AND_SERVICE" =~ ^[Yy]$ ]]; then
+    # Create default config
+    echo "Creating default config for Zurg..."
+    mkdir -p /etc/zurg
+    # Prompt for Real-Debrid API token
+    read -p "Enter your Real-Debrid API token: " RD_TOKEN
+    cat > /etc/zurg/config.yaml <<EOL
 lzurg: v1
 token: ${RD_TOKEN} # https://real-debrid.com/apitoken
 api_rate_limit_per_minute: 60
@@ -145,12 +161,12 @@ directories:
     filters:
       - regex: /.*/
 EOL
-  msg_ok "Default config created at /etc/zurg/config.yaml"
+    echo "Default config created at /etc/zurg/config.yaml"
 
-  # Create systemd service
-  msg_info "Creating systemd service for Zurg..."
-  cat > /etc/systemd/system/zurg.service <<EOL
-[[Unit]
+    # Create systemd service
+    echo "Creating systemd service for Zurg..."
+    cat > /etc/systemd/system/zurg.service <<EOL
+[Unit]
 Description=zurg
 After=network.target
 Wants=network-online.target
@@ -169,31 +185,33 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 EOL
 
-  # Reload systemd and enable the service
-  systemctl daemon-reload
-  systemctl enable zurg.service
-  systemctl start zurg.service
+    # Reload systemd and enable the service
+    systemctl daemon-reload
+    systemctl enable zurg.service
+    systemctl start zurg.service
 
-  msg_ok "Zurg systemd service created and started"
-else
-  msg_info "Skipping default config and systemd service setup"
-fi
+    echo "Zurg systemd service created and started"
+  else
+    echo "Skipping default config and systemd service setup"
+  fi
+}
 
-msg_info "Installing Rclone"
-RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
+install_rclone() {
+  echo "Installing Rclone"
+  RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
 
-$STD curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
-$STD unzip rclone-current-linux-amd64.zip
-$STD cd rclone-*-linux-amd64
-$STD cp rclone /usr/local/bin/
-$STD chown root:root /usr/local/bin/rclone
-$STD chmod 755 /usr/local/bin/rclone
+  curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+  unzip rclone-current-linux-amd64.zip
+  cd rclone-*-linux-amd64
+  cp rclone /usr/local/bin/
+  chown root:root /usr/local/bin/rclone
+  chmod 755 /usr/local/bin/rclone
 
-msg_ok "Installed rclone $RCLONE_LATEST_VERSION"
+  echo "Installed rclone $RCLONE_LATEST_VERSION"
 
-msg_info "Configuring rclone"
-mkdir -p /etc/rclone
-cat << EOF > /etc/rclone/rclone.conf
+  echo "Configuring rclone"
+  mkdir -p /etc/rclone
+  cat << EOF > /etc/rclone/rclone.conf
 [zurg]
 type = webdav
 url = http://zurg:9999/dav
@@ -201,25 +219,25 @@ vendor = other
 pacer_min_sleep = 0
 EOF
 
-mkdir -p /root/.config/rclone
-ln -sf /etc/rclone/rclone.conf /root/.config/rclone/rclone.conf
+  mkdir -p /root/.config/rclone
+  ln -sf /etc/rclone/rclone.conf /root/.config/rclone/rclone.conf
 
-msg_ok "Configured rclone"
+  echo "Configured rclone"
 
-# Setup fuse3
-msg_info "Setting up fuse3"
-if [ -f /etc/fuse.conf ]; then
-    sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
-else
-    echo "user_allow_other" > /etc/fuse.conf
-fi
-msg_ok "Configured fuse3"
+  # Setup fuse3
+  echo "Setting up fuse3"
+  if [ -f /etc/fuse.conf ]; then
+      sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+  else
+      echo "user_allow_other" > /etc/fuse.conf
+  fi
+  echo "Configured fuse3"
 
-read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
-mkdir -p "$MOUNT_POINT"
-# Create systemd service for rcloned
-msg_info "Creating systemd service for rclone..."
-cat > /etc/systemd/system/rclone.service <<EOL
+  read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
+  mkdir -p "$MOUNT_POINT"
+  # Create systemd service for rcloned
+  echo "Creating systemd service for rclone..."
+  cat > /etc/systemd/system/rclone.service <<EOL
 [Unit]
 Description=rclone
 After=network.target zurg.service
@@ -248,13 +266,16 @@ StartLimitBurst=3
 WantedBy=multi-user.target
 EOL
 
-# Reload systemd and enable the service
-systemctl daemon-reload
-systemctl enable rclone.service
-systemctl start rclone.service
+  # Reload systemd and enable the service
+  systemctl daemon-reload
+  systemctl enable rclone.service
+  systemctl start rclone.service
 
-msg_ok "Rclone systemd service created and started"
+  echo "Rclone systemd service created and started"
+}
 
+install_zurg
+install_rclone
 
 motd_ssh
 customize
