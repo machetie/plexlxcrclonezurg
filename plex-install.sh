@@ -191,10 +191,6 @@ install_zurg() {
     mv "$BINARY_FILE" /usr/local/bin/zurg
 
     echo "Zurg has been installed. You can now run it by typing 'zurg' in the terminal."
-else
-    echo "Failed to move Zurg binary to /usr/local/bin."
-    exit 1
-fi
 
     # Create and start systemd service
     create_zurg_config_file
