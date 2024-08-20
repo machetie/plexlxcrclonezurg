@@ -250,7 +250,7 @@ install_rclone() {
     cat << EOF > /etc/rclone/rclone.conf
 [zurg]
 type = webdav
-url = http://127.0.0.1:9999/dav
+url = http://localhost:9999/dav
 vendor = other
 pacer_min_sleep = 0
 EOF
