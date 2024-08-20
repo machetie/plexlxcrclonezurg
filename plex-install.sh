@@ -137,7 +137,7 @@ install_zurg() {
 
         # List available releases without pager
         echo "Available Zurg releases:"
-        gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO} --limit 10
+        gh release list -R ${PRIVATE_OWNER}/${PRIVATE_REPO} --limit 10 | cat
 
         # Prompt user to select a release
         read -p "Enter the tag of the release you want to download (or press Enter for latest): " RELEASE_TAG
