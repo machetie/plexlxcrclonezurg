@@ -270,7 +270,7 @@ EOF
     echo "Configured fuse3"
 
     # Ensure FUSE module is loaded
-    modprobe fuse
+    #modprobe fuse
     echo "fuse" >> /etc/modules-load.d/modules.conf
 
     read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
