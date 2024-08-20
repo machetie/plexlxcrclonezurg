@@ -232,6 +232,35 @@ EOF
     echo "Zurg systemd service has been created and started."
 }
 
+# Function to check if Zurg is available
+check_zurg_availability() {
+    local max_attempts=30
+    local attempt=1
+    local delay=10
+
+    while [ $attempt -le $max_attempts ]; do
+        if curl -s "http://localhost:9999/http/__all__" | grep -q ""; then
+            echo "Zurg is available."
+            return 0
+        fi
+        echo "Attempt $attempt: Zurg is not yet available. Waiting $delay seconds..."
+        sleep $delay
+        attempt=$((attempt + 1))
+    done
+
+    echo "Zurg is not available after $max_attempts attempts. Exiting."
+    return 1
+}
+
+install_zurg
+
+# Check Zurg availability before installing rclone
+if check_zurg_availability; then
+    install_rclone
+else
+    echo "Skipping rclone installation due to Zurg unavailability."
+fi
+
 install_rclone() {
     echo "Installing Rclone"
     RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
@@ -316,9 +345,6 @@ EOL
 
     echo "Rclone systemd service created and started"
 }
-
-install_zurg
-install_rclone
 
 msg_ok "Installed Plex Media Server"
 
