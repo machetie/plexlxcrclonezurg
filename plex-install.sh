@@ -77,10 +77,10 @@ install_zurg() {
     # Download the release
     if [ -z "$RELEASE_TAG" ]; then
       echo "Downloading latest release..."
-      gh release download -R debridmediamanager/zurg -p "*${SYSTEM_INFO}*" --clobber
+      gh release download -R debridmediamanager/zurg -p "*linux-amd64*" --clobber
     else
       echo "Downloading release ${RELEASE_TAG}..."
-      gh release download -R debridmediamanager/zurg ${RELEASE_TAG} -p "*linux-amd64*" --clobber
+      gh release download -R debridmediamanager/zurg -p "*${RELEASE_TAG}*linux-amd64*" --clobber
     fi
 
     # Find the downloaded file
