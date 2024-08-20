@@ -80,7 +80,7 @@ install_zurg() {
       gh release download -R debridmediamanager/zurg -p "*linux-amd64*" --clobber
     else
       echo "Downloading release ${RELEASE_TAG}..."
-      gh release download -R debridmediamanager/zurg -p "*${RELEASE_TAG}-linux-amd64.zip" --clobber
+      gh release download -R debridmediamanager/zurg -p "zurg-${RELEASE_TAG}-linux-amd64.zip" --clobber
     fi
 
     # Find the downloaded file
