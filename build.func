@@ -528,7 +528,7 @@ build_container() {
 #  if [ "$VERB" == "yes" ]; then set -x; fi
 
   if [ "$CT_TYPE" == "1" ]; then
-    FEATURES="keyctl=1,nesting=1"
+    FEATURES="keyctl=1,nesting=1,fuse=1"
   else
     FEATURES="nesting=1"
   fi

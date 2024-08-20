@@ -23,6 +23,8 @@ $STD apt-get install -y git
 $STD apt-get install -y gh
 $STD apt-get install -y jq
 $STD apt-get install -y fuse3
+$STD apt-get install -y fuse3-utils
+$STD apt-get install -y libfuse2
 msg_ok "Installed Dependencies"
 
 msg_info "Setting Up Hardware Acceleration"
@@ -268,6 +270,9 @@ EOF
         echo "user_allow_other" > /etc/fuse.conf
     fi
     echo "Configured fuse3"
+
+    # Load FUSE kernel module
+    modprobe fuse
 
     read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
     mkdir -p "$MOUNT_POINT"
