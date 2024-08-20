@@ -240,7 +240,9 @@ check_zurg_availability() {
     local delay=30
 
     while [ $attempt -le $max_attempts ]; do
-        if curl -s "http://localhost:9999/http/__all__" | grep -q ""; then
+        response=$(curl -s "http://localhost:9999/http/__all__/")
+        if [[ -n "$response" ]]; then
+            echo "${response:0:100}..."
             echo "Zurg is available."
             return 0
         fi
