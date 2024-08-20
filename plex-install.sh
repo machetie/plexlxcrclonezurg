@@ -346,6 +346,9 @@ EOL
     echo "Rclone systemd service created and started"
 }
 
+install_zurg
+install_rclone
+
 msg_ok "Installed Plex Media Server"
 
 motd_ssh
