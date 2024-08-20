@@ -234,26 +234,27 @@ EOF
 }
 
 # Function to check if Zurg is available
-check_zurg_availability() {
-    local max_attempts=30
-    local attempt=1
-    local delay=30
+#check_zurg_availability() {
+#    local max_attempts=30
+#    local attempt=1
+#    local delay=30
+#
+#    while [ $attempt -le $max_attempts ]; do
+#        response=$(curl -s "http://localhost:9999/http/torrents/")
+#        if [[ -n "$response" ]]; then
+#            echo "${response:0:100}..."
+#            echo "Zurg is available."
+#            return 0
+#        fi
+#        echo "Attempt $attempt: Zurg is not yet available. Waiting $delay seconds..."
+#        sleep $delay
+#        attempt=$((attempt + 1))
+#    done
+#
+#    echo "Zurg is not available after $max_attempts attempts. Exiting."
+#    return 1
+#}
 
-    while [ $attempt -le $max_attempts ]; do
-        response=$(curl -s "http://localhost:9999/http/__all__/")
-        if [[ -n "$response" ]]; then
-            echo "${response:0:100}..."
-            echo "Zurg is available."
-            return 0
-        fi
-        echo "Attempt $attempt: Zurg is not yet available. Waiting $delay seconds..."
-        sleep $delay
-        attempt=$((attempt + 1))
-    done
-
-    echo "Zurg is not available after $max_attempts attempts. Exiting."
-    return 1
-}
 
 # Function to install rclone
 install_rclone() {
