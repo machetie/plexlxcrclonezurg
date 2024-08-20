@@ -269,8 +269,9 @@ EOF
     fi
     echo "Configured fuse3"
 
-    # Load FUSE kernel module
+    # Ensure FUSE module is loaded
     modprobe fuse
+    echo "fuse" >> /etc/modules-load.d/modules.conf
 
     read -p "Enter the mount point path (e.g., /mnt/zurg): " MOUNT_POINT
     mkdir -p "$MOUNT_POINT"
@@ -294,7 +295,9 @@ ExecStart=/usr/local/bin/rclone mount zurg: ${MOUNT_POINT} \
     --vfs-read-chunk-size-limit off \
     --buffer-size 256M \
     --log-level INFO \
-    --log-file /var/log/rclone.log
+    --log-file /var/log/rclone.log \
+    --no-modtime \
+    --no-checksum
 ExecStop=/bin/fusermount -uz ${MOUNT_POINT}
 Restart=on-abort
 RestartSec=5

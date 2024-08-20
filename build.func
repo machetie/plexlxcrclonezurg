@@ -528,9 +528,11 @@ build_container() {
 #  if [ "$VERB" == "yes" ]; then set -x; fi
 
   if [ "$CT_TYPE" == "1" ]; then
+    # Unprivileged container
     FEATURES="keyctl=1,nesting=1,fuse=1"
   else
-    FEATURES="nesting=1"
+    # Privileged container
+    FEATURES="nesting=1,fuse=1"
   fi
 
 
@@ -584,6 +586,14 @@ lxc.mount.entry: /dev/ttyUSB0       dev/ttyUSB0       none bind,optional,create=
 lxc.mount.entry: /dev/ttyUSB1       dev/ttyUSB1       none bind,optional,create=file
 lxc.mount.entry: /dev/ttyACM0       dev/ttyACM0       none bind,optional,create=file
 lxc.mount.entry: /dev/ttyACM1       dev/ttyACM1       none bind,optional,create=file
+# FUSE support
+lxc.mount.entry: /dev/fuse dev/fuse none bind,create=file,rw 0 0
+EOF
+  else
+    # For unprivileged containers, we need to ensure FUSE device is accessible
+    cat <<EOF >>$LXC_CONFIG
+# FUSE support
+lxc.mount.entry: /dev/fuse dev/fuse none bind,create=file,rw 0 0
 EOF
   fi
 
