@@ -236,7 +236,7 @@ EOF
 check_zurg_availability() {
     local max_attempts=30
     local attempt=1
-    local delay=10
+    local delay=30
 
     while [ $attempt -le $max_attempts ]; do
         if curl -s "http://localhost:9999/http/__all__" | grep -q ""; then
