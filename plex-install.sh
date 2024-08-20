@@ -200,7 +200,7 @@ install_zurg() {
 # Function to create and start systemd service for Zurg
 create_and_start_systemd_service() {
     # Create systemd service file
-    cat << EOF | tee /etc/systemd/system/zurg.service
+    cat << EOF | tee /etc/systemd/system/zurg.service > /dev/null
 [Unit]
 Description=zurg
 After=network.target
@@ -313,6 +313,8 @@ EOL
 install_zurg
 install_rclone
 
+msg_ok "Installed Plex Media Server"
+
 motd_ssh
 customize
 
@@ -320,6 +322,3 @@ msg_info "Cleaning up"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
-
-msg_ok "Plex Media Server installation completed successfully!"
-echo -e "Plex should be reachable at http://${IP}:32400/web"
