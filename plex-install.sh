@@ -107,6 +107,7 @@ retain_folder_name_extension: true
 enable_repair: false
 auto_delete_rar_torrents: false
 get_torrents_count: 5000
+force_ipv6: false
 directories:
   torrents:
     group: 1
