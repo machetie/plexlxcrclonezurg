@@ -253,15 +253,7 @@ check_zurg_availability() {
     return 1
 }
 
-install_zurg
-
-# Check Zurg availability before installing rclone
-if check_zurg_availability; then
-    install_rclone
-else
-    echo "Skipping rclone installation due to Zurg unavailability."
-fi
-
+# Function to install rclone
 install_rclone() {
     echo "Installing Rclone"
     RCLONE_LATEST_VERSION=$(curl -s https://api.github.com/repos/rclone/rclone/releases/latest | grep 'tag_name' | cut -d '"' -f4)
@@ -348,7 +340,13 @@ EOL
 }
 
 install_zurg
-install_rclone
+
+# Check Zurg availability before installing rclone
+if check_zurg_availability; then
+    install_rclone
+else
+    echo "Skipping rclone installation due to Zurg unavailability."
+fi
 
 msg_ok "Installed Plex Media Server"
 
