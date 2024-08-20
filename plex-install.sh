@@ -250,7 +250,7 @@ install_rclone() {
     cat << EOF > /etc/rclone/rclone.conf
 [zurg]
 type = webdav
-url = http://zurg:9999/dav
+url = http://127.0.0.1:9999/dav
 vendor = other
 pacer_min_sleep = 0
 EOF
@@ -282,21 +282,22 @@ EOF
 Description=rclone
 After=network.target zurg.service
 Wants=network-online.target
+Requires=zurg.service
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/rclone mount zurg: ${MOUNT_POINT} \
-    --allow-other \
-    --dir-cache-time 96h \
-    --vfs-cache-mode writes \
-    --vfs-cache-max-size 100G \
-    --vfs-read-chunk-size 128M \
-    --vfs-read-chunk-size-limit off \
-    --buffer-size 256M \
-    --log-level INFO \
-    --log-file /var/log/rclone.log \
-    --no-modtime \
+ExecStart=/usr/local/bin/rclone mount zurg: ${MOUNT_POINT} \\
+    --allow-other \\
+    --dir-cache-time 96h \\
+    --vfs-cache-mode writes \\
+    --vfs-cache-max-size 100G \\
+    --vfs-read-chunk-size 128M \\
+    --vfs-read-chunk-size-limit off \\
+    --buffer-size 256M \\
+    --log-level INFO \\
+    --log-file /var/log/rclone.log \\
+    --no-modtime \\
     --no-checksum
 ExecStop=/bin/fusermount -uz ${MOUNT_POINT}
 Restart=on-abort
